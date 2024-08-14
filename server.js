@@ -38,8 +38,6 @@ io.on('connection', (socket) => {
         callback(roomId);
         io.emit('roomsList', Object.keys(rooms).map(id => ({ id, host: rooms[id].hostUsername })));
     });
-    
-    //test fonctionne !
 
     socket.on('getRooms', () => {
         const availableRooms = Object.keys(rooms).map(id => ({
