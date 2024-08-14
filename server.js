@@ -21,8 +21,6 @@ const roomNames = [
     "l'église"
 ];
 
-// salut
-
 io.on('connection', (socket) => {
     console.log('a user connected');
 
@@ -42,7 +40,13 @@ io.on('connection', (socket) => {
     });
     
 
-
+    socket.on('getRooms', () => {
+        const availableRooms = Object.keys(rooms).map(id => ({
+            id,
+            host: rooms[id].hostUsername
+        }));
+        socket.emit('roomsList', availableRooms);
+    });
 
     socket.on('joinRoom', ({ username, roomId }, callback) => {
         if (rooms[roomId]) {
