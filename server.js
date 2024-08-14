@@ -39,6 +39,7 @@ io.on('connection', (socket) => {
         io.emit('roomsList', Object.keys(rooms).map(id => ({ id, host: rooms[id].hostUsername })));
     });
     
+    //test
 
     socket.on('getRooms', () => {
         const availableRooms = Object.keys(rooms).map(id => ({
