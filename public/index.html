@@ -70,8 +70,8 @@
     </div>
     <div id="chooseRole">
         <h2>Choisissez votre rôle</h2>
-        <img src="/images/escape.png" alt="Aventuriers" class="role" onclick="chooseRole('aventurier')">
-        <img src="/images/hunt.png" alt="Traqueurs" class="role" onclick="chooseRole('traqueur')">
+        <img src="/images/escape.png" alt="Aventuriers" width="200px" class="role" onclick="chooseRole('aventurier')">
+        <img src="/images/hunt.png" alt="Traqueurs" width="200px" class="role" onclick="chooseRole('traqueur')">
     </div>
     <div id="chooseClass">
         <h2>Choisissez votre classe</h2>
@@ -266,7 +266,7 @@
             if (role === 'aventurier') {
                 startAdventurersTurn();
             } else if (role === 'traqueur') {
-                showAdventurersWait();
+                showTraqueursWait();
             }
         });
 
@@ -274,7 +274,7 @@
     if (role === 'aventurier') {
         startAdventurersTurn();
     } else if (role === 'traqueur') {
-        showAdventurersWait();
+        showTraqueursWait();
     }
 });
 
