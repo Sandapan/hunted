@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hunted Game</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #lobby, #room, #chooseRole, #chooseClass, #castleRooms, #waitingMessage, #traqueursWait, #adventurersWait { display: none; }
+        .role, .class, .room { cursor: pointer; margin: 5px; }
+        .rooms-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-gap: 20px;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .room-cell {
+            text-align: center;
+        }
+        .room {
+            max-width: 100%;
+            height: auto;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        .room-players {
+            margin-top: 10px;
+            font-size: 1em;
+            color: #333;
+        }
+        .waiting-container {
+            text-align: center;
+            margin-top: 50px;
+        }
+        .waiting-container img {
+            width: 100px;
+            margin-top: 20px;
+        }
+
+      
+        /* Style optionnel pour le conteneur de résultats */
+        #resultsContainer {
+            display: none; /* Caché par défaut */
+            margin-top: 20px;
+            padding: 10px;
+            border: 2px solid #333;
+            background-color: #f9f9f9;
+            font-size: 18px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>Participez à la traque</h1>
+    <div id="login">
+        <input type="text" id="username" placeholder="Quel est votre pseudo ?">
+        <button onclick="login()">S'inscrire</button>
+    </div>
+    <div id="lobby">
+        <button onclick="createRoom()">Créer une traque</button>
+        <button onclick="showRooms()">Rejoindre une traque</button>
+        <div id="rooms" style="display: none;">
+            <h3>Salles disponibles :</h3>
+            <ul id="roomsList"></ul>
+        </div>
+    </div>
+    <div id="chooseRole">
+        <h2>Choisissez votre rôle</h2>
+        <img src="/images/escape.png" alt="Aventuriers" class="role" onclick="chooseRole('aventurier')">
+        <img src="/images/hunt.png" alt="Traqueurs" class="role" onclick="chooseRole('traqueur')">
+    </div>
+    <div id="chooseClass">
+        <h2>Choisissez votre classe</h2>
+        <div id="classOptions"></div>
+        <button onclick="goBackToRole()">Changer de rôle</button>
+    </div>
+    <div id="room">
+        <h2>Salle</h2>
+        <p>Room ID: <span id="roomId"></span></p>
+        <p>Joueurs :</p>
+        <ul id="players"></ul>
+        <button id="startGame" onclick="startGame()">Démarrer la traque</button>
+        <button id="deleteRoom" onclick="deleteRoom()">Supprimer la salle</button>
+        <button onclick="changeRole()">Changer de rôle</button>
+        <button onclick="changeClass()">Changer de classe</button>
+    </div>
+    <div id="turnCounter" style="display: none;">Tour 1</div>
+    <div id="hpContainer"></div>
+    <div id="traqueursWait" class="waiting-container">
+        <h2>Veuillez attendre que les aventuriers jouent leur tour</h2>
+        <img src="/images/hourglass.gif" alt="Hourglass">
+    </div>
+    <div id="adventurersWait" class="waiting-container">
+        <h2>Veuillez attendre que les traqueurs jouent leur tour</h2>
+        <img src="/images/hourglass.gif" alt="Hourglass">
+    </div>
+    <div id="castleRooms">
+        <h2>Choisissez une pièce</h2>
+        <div class="rooms-grid">
+            <div class="room-cell">
+                <img src="/images/banquet.png" class="room" onclick="chooseRoom(0)">
+                <div id="room-0-players" class="room-players"></div>
+            </div>
+            <div class="room-cell">
+                <img src="/images/ecurie.png" class="room" onclick="chooseRoom(1)">
+                <div id="room-1-players" class="room-players"></div>
+            </div>
+            <div class="room-cell">
+                <img src="/images/grimoire.png" class="room" onclick="chooseRoom(2)">
+                <div id="room-2-players" class="room-players"></div>
+            </div>
+            <div class="room-cell">
+                <img src="/images/oubliette.png" class="room" onclick="chooseRoom(3)">
+                <div id="room-3-players" class="room-players"></div>
+            </div>
+            <div class="room-cell">
+                <img src="/images/trone.png" class="room" onclick="chooseRoom(4)">
+                <div id="room-4-players" class="room-players"></div>
+            </div>
+            <div class="room-cell">
+                <img src="/images/eglise.png" class="room" onclick="chooseRoom(5)">
+                <div id="room-5-players" class="room-players"></div>
+            </div>
+        </div>
+    </div>
+    <div id="waitingMessage">
+        <h2>En attente du choix des autres joueurs...</h2>
+        <p id="unchosenPlayersList"></p>
+    </div>
+    <div id="resultsContainer" style="display: none;">
+        <h2>Résultats du tour</h2>
+    </div>
+    
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let username = '';
+        let currentRoomId = '';
+        let role = '';
+        let className = '';
+
+        function login() {
+            username = document.getElementById('username').value;
+            if (username) {
+                document.getElementById('login').style.display = 'none';
+                document.getElementById('lobby').style.display = 'block';
+            }
+        }
+
+        function createRoom() {
+            socket.emit('createRoom', username, (roomId) => {
+                currentRoomId = roomId;
+                document.getElementById('lobby').style.display = 'none';
+                document.getElementById('chooseRole').style.display = 'block';
+                document.getElementById('room').style.display = 'block';
+                document.getElementById('roomId').innerText = roomId;
+            });
+        }
+
+        function showRooms() {
+            socket.emit('getRooms');
+        }
+
+        socket.on('roomsList', (rooms) => {
+            const roomsList = document.getElementById('roomsList');
+            roomsList.innerHTML = '';
+            rooms.forEach(room => {
+                const li = document.createElement('li');
+                li.innerText = `Room ${room.id} - Host: ${room.host}`;
+                const joinButton = document.createElement('button');
+                joinButton.innerText = 'Rejoindre';
+                joinButton.onclick = () => joinRoom(room.id);
+                li.appendChild(joinButton);
+                roomsList.appendChild(li);
+            });
+            document.getElementById('rooms').style.display = 'block';
+        });
+
+        function joinRoom(roomId) {
+            socket.emit('joinRoom', { username, roomId }, (players) => {
+                currentRoomId = roomId;
+                document.getElementById('lobby').style.display = 'none';
+                document.getElementById('chooseRole').style.display = 'block';
+                document.getElementById('room').style.display = 'block';
+                document.getElementById('roomId').innerText = roomId;
+                updatePlayers(players);
+            });
+        }
+
+        function chooseRole(selectedRole) {
+            role = selectedRole;
+            document.getElementById('chooseRole').style.display = 'none';
+            document.getElementById('chooseClass').style.display = 'block';
+
+            const classOptions = document.getElementById('classOptions');
+            classOptions.innerHTML = '';
+
+            const classes = {
+                'aventurier': ['archer', 'viking', 'assassin', 'brute', 'mage', 'nain'],
+                'traqueur': ['roi', 'orcmage', 'orcbrute']
+            };
+
+            classes[selectedRole].forEach(cls => {
+                const img = document.createElement('img');
+                img.src = `/images/${cls}.gif`;
+                img.alt = cls;
+                img.className = 'class';
+                img.onclick = () => chooseClass(cls);
+                classOptions.appendChild(img);
+            });
+        }
+
+        function chooseClass(selectedClass) {
+            className = selectedClass;
+            socket.emit('chooseClass', { username, role, className, roomId: currentRoomId }, (players) => {
+                document.getElementById('chooseClass').style.display = 'none';
+                document.getElementById('room').style.display = 'block';
+                updatePlayers(players);
+            });
+        }
+        socket.on('updatePlayers', (players) => {
+            updatePlayers(players);
+        });
+
+        function goBackToRole() {
+            document.getElementById('chooseClass').style.display = 'none';
+            document.getElementById('chooseRole').style.display = 'block';
+        }
+
+        function updatePlayers(players) {
+            const playersList = document.getElementById('players');
+            playersList.innerHTML = '';
+            players.forEach(player => {
+                const li = document.createElement('li');
+                li.innerText = `${player.username} (${player.role}, ${player.className})`;
+                if (player.role && player.className) {
+                    const img = document.createElement('img');
+                    img.src = `/images/${player.className.toLowerCase()}.gif`;
+                    img.alt = player.className;
+                    li.appendChild(img);
+                }
+                playersList.appendChild(li);
+            });
+        }
+
+        socket.on('updateTurnCounter', (turnCounter) => {
+        document.getElementById('turnCounter').textContent = `Tour ${turnCounter}`;
+        });
+
+
+        function startGame() {
+            socket.emit('startGame', currentRoomId);
+        }
+
+        socket.on('gameStarted', () => {
+               // Afficher le compteur de tours
+            const turnDisplay = document.getElementById('turnCounter');
+            if (turnDisplay) {
+            turnDisplay.style.display = 'block';
+    }
+            if (role === 'aventurier') {
+                startAdventurersTurn();
+            } else if (role === 'traqueur') {
+                showAdventurersWait();
+            }
+        });
+
+        socket.on('startAdventurersTurn', () => {
+    if (role === 'aventurier') {
+        startAdventurersTurn();
+    } else if (role === 'traqueur') {
+        showAdventurersWait();
+    }
+});
+
+
+        function startAdventurersTurn() {
+            document.getElementById('castleRooms').style.display = 'block';
+            document.getElementById('adventurersWait').style.display = 'none';
+            document.getElementById('waitingMessage').style.display = 'none';
+        }
+
+        function startTraqueursTurn() {
+            document.getElementById('castleRooms').style.display = 'block';
+            document.getElementById('adventurersWait').style.display = 'none';
+            document.getElementById('waitingMessage').style.display = 'none';
+        }
+
+
+        function showTraqueursWait() {
+            document.getElementById('traqueursWait').style.display = 'block'; // Affiche le message d'attente des aventuriers
+            document.getElementById('castleRooms').style.display = 'none'; // Cache les salles du château
+            document.getElementById('waitingMessage').style.display = 'none';  // Cache le message d'attente précédent
+        }
+
+        function showAdventurersWait() {
+            document.getElementById('adventurersWait').style.display = 'block';     // Affiche le message d'attente des traqueurs
+            document.getElementById('castleRooms').style.display = 'none';    // Cache les salles du château
+            document.getElementById('waitingMessage').style.display = 'none';     // Cache le message d'attente précédent
+        }
+
+        function chooseRoom(roomIndex) {
+    if (role === 'traqueur') {
+        chooseHunterRoom(roomIndex);
+    } else if (role === 'aventurier') {
+        socket.emit('chooseRoom', { roomId: currentRoomId, playerId: socket.id, roomIndex: roomIndex });
+        document.getElementById('castleRooms').style.display = 'none';
+        document.getElementById('waitingMessage').style.display = 'block';
+    }
+}
+
+        function chooseHunterRoom(roomIndex) {
+            socket.emit('chooseHunterRoom', { roomId: currentRoomId, playerId: socket.id, roomIndex: roomIndex });
+            document.getElementById('castleRooms').style.display = 'none';
+            document.getElementById('waitingMessage').style.display = 'block';
+        }
+
+
+        socket.on('roomUpdate', (data) => {
+            if (data.roomId === currentRoomId) {
+                data.players.forEach(player => {
+                    const playerList = document.getElementById(`room-${player.roomId}-players`);
+                    playerList.innerHTML = '';
+                    const playerEntry = document.createElement('li');
+                    playerEntry.textContent = `${player.username} (${player.className})`;
+                    playerList.appendChild(playerEntry);
+                });
+            }
+        });
+
+        socket.on('chooseRoom', ({ roomId, playerId, roomIndex }) => {
+        console.log(`chooseRoom reçu: roomId=${roomId}, playerId=${playerId}, roomIndex=${roomIndex}`);
+        if (rooms[roomId]) {
+            rooms[roomId].choices[playerId] = roomIndex;
+
+            let allAdventurersChosen = true;
+            let unchosenAdventurers = [];
+            for (let player of rooms[roomId].players) {
+                if (player.role === 'aventurier' && !(player.id in rooms[roomId].choices)) {
+                    allAdventurersChosen = false;
+                    unchosenAdventurers.push(player.username);
+                }
+            }
+            console.log(`Unchosen adventurers: ${unchosenAdventurers}`);
+
+            if (allAdventurersChosen) {
+                rooms[roomId].adventurersChosen = true;
+                console.log(`Tous les aventuriers ont choisi, début du tour des traqueurs`);
+                io.in(roomId).emit('startTraqueursTurn');
+            } else {
+                io.in(roomId).emit('waitingForPlayers', unchosenAdventurers);
+            }
+        }
+    });
+
+    socket.on('startTraqueursTurn', () => {
+    if (role === 'traqueur') {
+        startTraqueursTurn();
+    } else {
+        showAdventurersWait(); // Assurez-vous que les aventuriers voient le bon message
+    }
+});
+        socket.on('waitAdventurers', () => {
+            if (role === 'aventurier') {
+                showAdventurersWait();
+            }
+        });
+
+        socket.on('waitingForPlayers', (unchosenPlayers) => {
+            const unchosenPlayersList = document.getElementById('unchosenPlayersList');
+            if (unchosenPlayers.length > 0) {
+                unchosenPlayersList.innerHTML = `<strong>Les joueurs suivants n'ont pas encore choisi:</strong> ${unchosenPlayers.join(', ')}`;
+            } else {
+                unchosenPlayersList.innerHTML = '';
+            }
+            document.getElementById('waitingMessage').style.display = 'block';
+        });
+
+// Événement pour effacer les affichages
+socket.on('clearDisplays', () => {
+    document.getElementById('castleRooms').style.display = 'none';
+    document.getElementById('waitingMessage').style.display = 'none';
+});
+
+// Événement pour afficher un message
+socket.on('displayMessage', (message) => {
+    document.getElementById('messageBox').innerText = message;
+    document.getElementById('messageBox').style.display = 'block';
+});
+
+socket.on('updateHP', (hpData) => {
+    const hpContainer = document.getElementById('hpContainer');
+    hpContainer.innerHTML = ''; // Clear previous HP data
+
+    hpData.forEach(player => {
+        const hpElement = document.createElement('div');
+        hpElement.innerText = `${player.username}: ${player.hp} HP`;
+        hpContainer.appendChild(hpElement);
+    });
+});
+
+
+socket.on('startVerificationPhase', () => {
+    console.log('Début de la phase de vérification.');
+
+    document.getElementById('waitingMessage').style.display = 'none';
+    document.getElementById('adventurersWait').style.display = 'none';
+    document.getElementById('castleRooms').style.display = 'none';
+    // Tu peux afficher une nouvelle section pour la phase de vérification
+});
+
+socket.on('showResults', (results) => {
+    console.log('Résultats reçus:', results);
+    
+    const waitingMessage = document.getElementById('waitingMessage');
+    const adventurersWait = document.getElementById('adventurersWait');
+    const unchosenPlayersList = document.getElementById('unchosenPlayersList');
+    const resultsContainer = document.getElementById('resultsContainer');
+
+    if (waitingMessage) waitingMessage.style.display = 'none';
+    if (adventurersWait) adventurersWait.style.display = 'none';
+    if (unchosenPlayersList) unchosenPlayersList.innerHTML = '';
+
+    if (resultsContainer) {
+        resultsContainer.style.display = 'block';
+
+        // Vider le contenu sans toucher au titre
+        const previousResults = resultsContainer.querySelectorAll('p');
+        previousResults.forEach(resultElement => resultElement.remove());
+
+        // Ajouter les nouveaux résultats
+        results.forEach(result => {
+            const resultElement = document.createElement('p');
+            resultElement.textContent = result;
+            resultsContainer.appendChild(resultElement);
+        });
+
+        // Masquer le conteneur après 5 secondes
+        setTimeout(() => {
+            resultsContainer.style.display = 'none';
+        }, 5000);
+    } else {
+        console.error('Élément resultsContainer non trouvé');
+    }
+});
+
+
+
+
+        function showWaitingMessage() {
+            document.getElementById('castleRooms').style.display = 'none';
+            document.getElementById('waitingMessage').style.display = 'block'; // Affiche le message d'attente général
+
+            document.getElementById('adventurersWait').style.display = 'none'; // <- A ENLEVER SI PROBLEMES
+        }
+    </script>
+</body>
+</html>
