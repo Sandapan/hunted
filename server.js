@@ -40,7 +40,6 @@ io.on('connection', (socket) => {
     });
     
     //test fonctionne !
-    // test thib
 
     socket.on('getRooms', () => {
         const availableRooms = Object.keys(rooms).map(id => ({
