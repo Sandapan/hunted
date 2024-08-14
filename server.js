@@ -21,6 +21,7 @@ const roomNames = [
     "l'église"
 ];
 
+// salut
 
 io.on('connection', (socket) => {
     console.log('a user connected');
