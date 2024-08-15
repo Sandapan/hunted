@@ -1,13 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hunted Game</title>
     <style>
-        body { font-family: Arial, sans-serif; }
-        #lobby, #room, #chooseRole, #chooseClass, #castleRooms, #waitingMessage, #traqueursWait, #adventurersWait { display: none; }
-        .role, .class, .room { cursor: pointer; margin: 5px; }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #333;
+        }
+
+        #lobby,
+        #room,
+        #chooseRole,
+        #chooseClass,
+        #castleRooms,
+        #waitingMessage,
+        #traqueursWait,
+        #adventurersWait {
+            display: none;
+        }
+
+        .role,
+        .class,
+        .room {
+            cursor: pointer;
+            margin: 5px;
+        }
+
         .rooms-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -17,9 +38,11 @@
             padding: 10px;
             box-sizing: border-box;
         }
+
         .room-cell {
             text-align: center;
         }
+
         .room {
             max-width: 100%;
             height: auto;
@@ -27,24 +50,28 @@
             border: 1px solid #ccc;
             box-sizing: border-box;
         }
+
         .room-players {
             margin-top: 10px;
             font-size: 1em;
             color: #333;
         }
+
         .waiting-container {
             text-align: center;
             margin-top: 50px;
         }
+
         .waiting-container img {
             width: 100px;
             margin-top: 20px;
         }
 
-      
+
         /* Style optionnel pour le conteneur de résultats */
         #resultsContainer {
-            display: none; /* Caché par défaut */
+            display: none;
+            /* Caché par défaut */
             margin-top: 20px;
             padding: 10px;
             border: 2px solid #333;
@@ -54,6 +81,7 @@
         }
     </style>
 </head>
+
 <body>
     <h1>Participez à la traque</h1>
     <div id="login">
@@ -134,8 +162,8 @@
     <div id="resultsContainer" style="display: none;">
         <h2>Résultats du tour</h2>
     </div>
-    
-    
+
+
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
@@ -249,7 +277,7 @@
         }
 
         socket.on('updateTurnCounter', (turnCounter) => {
-        document.getElementById('turnCounter').textContent = `Tour ${turnCounter}`;
+            document.getElementById('turnCounter').textContent = `Tour ${turnCounter}`;
         });
 
 
@@ -258,11 +286,11 @@
         }
 
         socket.on('gameStarted', () => {
-               // Afficher le compteur de tours
+            // Afficher le compteur de tours
             const turnDisplay = document.getElementById('turnCounter');
             if (turnDisplay) {
-            turnDisplay.style.display = 'block';
-    }
+                turnDisplay.style.display = 'block';
+            }
             if (role === 'aventurier') {
                 startAdventurersTurn();
             } else if (role === 'traqueur') {
@@ -271,12 +299,12 @@
         });
 
         socket.on('startAdventurersTurn', () => {
-    if (role === 'aventurier') {
-        startAdventurersTurn();
-    } else if (role === 'traqueur') {
-        showTraqueursWait();
-    }
-});
+            if (role === 'aventurier') {
+                startAdventurersTurn();
+            } else if (role === 'traqueur') {
+                showTraqueursWait();
+            }
+        });
 
 
         function startAdventurersTurn() {
@@ -287,13 +315,13 @@
 
         function startTraqueursTurn() {
             document.getElementById('castleRooms').style.display = 'block';
-            document.getElementById('adventurersWait').style.display = 'none';
+            document.getElementById('traqueursWait').style.display = 'none';
             document.getElementById('waitingMessage').style.display = 'none';
         }
 
 
         function showTraqueursWait() {
-            document.getElementById('traqueursWait').style.display = 'block'; // Affiche le message d'attente des aventuriers
+            document.getElementById('traqueursWait').style.display = 'block'; // Affiche le message disant aux traqueurs d'attendre
             document.getElementById('castleRooms').style.display = 'none'; // Cache les salles du château
             document.getElementById('waitingMessage').style.display = 'none';  // Cache le message d'attente précédent
         }
@@ -305,14 +333,14 @@
         }
 
         function chooseRoom(roomIndex) {
-    if (role === 'traqueur') {
-        chooseHunterRoom(roomIndex);
-    } else if (role === 'aventurier') {
-        socket.emit('chooseRoom', { roomId: currentRoomId, playerId: socket.id, roomIndex: roomIndex });
-        document.getElementById('castleRooms').style.display = 'none';
-        document.getElementById('waitingMessage').style.display = 'block';
-    }
-}
+            if (role === 'traqueur') {
+                chooseHunterRoom(roomIndex);
+            } else if (role === 'aventurier') {
+                socket.emit('chooseRoom', { roomId: currentRoomId, playerId: socket.id, roomIndex: roomIndex });
+                document.getElementById('castleRooms').style.display = 'none';
+                document.getElementById('waitingMessage').style.display = 'block';
+            }
+        }
 
         function chooseHunterRoom(roomIndex) {
             socket.emit('chooseHunterRoom', { roomId: currentRoomId, playerId: socket.id, roomIndex: roomIndex });
@@ -334,37 +362,37 @@
         });
 
         socket.on('chooseRoom', ({ roomId, playerId, roomIndex }) => {
-        console.log(`chooseRoom reçu: roomId=${roomId}, playerId=${playerId}, roomIndex=${roomIndex}`);
-        if (rooms[roomId]) {
-            rooms[roomId].choices[playerId] = roomIndex;
+            console.log(`chooseRoom reçu: roomId=${roomId}, playerId=${playerId}, roomIndex=${roomIndex}`);
+            if (rooms[roomId]) {
+                rooms[roomId].choices[playerId] = roomIndex;
 
-            let allAdventurersChosen = true;
-            let unchosenAdventurers = [];
-            for (let player of rooms[roomId].players) {
-                if (player.role === 'aventurier' && !(player.id in rooms[roomId].choices)) {
-                    allAdventurersChosen = false;
-                    unchosenAdventurers.push(player.username);
+                let allAdventurersChosen = true;
+                let unchosenAdventurers = [];
+                for (let player of rooms[roomId].players) {
+                    if (player.role === 'aventurier' && !(player.id in rooms[roomId].choices)) {
+                        allAdventurersChosen = false;
+                        unchosenAdventurers.push(player.username);
+                    }
+                }
+                console.log(`Unchosen adventurers: ${unchosenAdventurers}`);
+
+                if (allAdventurersChosen) {
+                    rooms[roomId].adventurersChosen = true;
+                    console.log(`Tous les aventuriers ont choisi, début du tour des traqueurs`);
+                    io.in(roomId).emit('startTraqueursTurn');
+                } else {
+                    io.in(roomId).emit('waitingForPlayers', unchosenAdventurers);
                 }
             }
-            console.log(`Unchosen adventurers: ${unchosenAdventurers}`);
+        });
 
-            if (allAdventurersChosen) {
-                rooms[roomId].adventurersChosen = true;
-                console.log(`Tous les aventuriers ont choisi, début du tour des traqueurs`);
-                io.in(roomId).emit('startTraqueursTurn');
+        socket.on('startTraqueursTurn', () => {
+            if (role === 'traqueur') {
+                startTraqueursTurn();
             } else {
-                io.in(roomId).emit('waitingForPlayers', unchosenAdventurers);
+                showAdventurersWait(); // Assurez-vous que les aventuriers voient le bon message
             }
-        }
-    });
-
-    socket.on('startTraqueursTurn', () => {
-    if (role === 'traqueur') {
-        startTraqueursTurn();
-    } else {
-        showAdventurersWait(); // Assurez-vous que les aventuriers voient le bon message
-    }
-});
+        });
         socket.on('waitAdventurers', () => {
             if (role === 'aventurier') {
                 showAdventurersWait();
@@ -381,73 +409,73 @@
             document.getElementById('waitingMessage').style.display = 'block';
         });
 
-// Événement pour effacer les affichages
-socket.on('clearDisplays', () => {
-    document.getElementById('castleRooms').style.display = 'none';
-    document.getElementById('waitingMessage').style.display = 'none';
-});
-
-// Événement pour afficher un message
-socket.on('displayMessage', (message) => {
-    document.getElementById('messageBox').innerText = message;
-    document.getElementById('messageBox').style.display = 'block';
-});
-
-socket.on('updateHP', (hpData) => {
-    const hpContainer = document.getElementById('hpContainer');
-    hpContainer.innerHTML = ''; // Clear previous HP data
-
-    hpData.forEach(player => {
-        const hpElement = document.createElement('div');
-        hpElement.innerText = `${player.username}: ${player.hp} HP`;
-        hpContainer.appendChild(hpElement);
-    });
-});
-
-
-socket.on('startVerificationPhase', () => {
-    console.log('Début de la phase de vérification.');
-
-    document.getElementById('waitingMessage').style.display = 'none';
-    document.getElementById('adventurersWait').style.display = 'none';
-    document.getElementById('castleRooms').style.display = 'none';
-    // Tu peux afficher une nouvelle section pour la phase de vérification
-});
-
-socket.on('showResults', (results) => {
-    console.log('Résultats reçus:', results);
-    
-    const waitingMessage = document.getElementById('waitingMessage');
-    const adventurersWait = document.getElementById('adventurersWait');
-    const unchosenPlayersList = document.getElementById('unchosenPlayersList');
-    const resultsContainer = document.getElementById('resultsContainer');
-
-    if (waitingMessage) waitingMessage.style.display = 'none';
-    if (adventurersWait) adventurersWait.style.display = 'none';
-    if (unchosenPlayersList) unchosenPlayersList.innerHTML = '';
-
-    if (resultsContainer) {
-        resultsContainer.style.display = 'block';
-
-        // Vider le contenu sans toucher au titre
-        const previousResults = resultsContainer.querySelectorAll('p');
-        previousResults.forEach(resultElement => resultElement.remove());
-
-        // Ajouter les nouveaux résultats
-        results.forEach(result => {
-            const resultElement = document.createElement('p');
-            resultElement.textContent = result;
-            resultsContainer.appendChild(resultElement);
+        // Événement pour effacer les affichages
+        socket.on('clearDisplays', () => {
+            document.getElementById('castleRooms').style.display = 'none';
+            document.getElementById('waitingMessage').style.display = 'none';
         });
 
-        // Masquer le conteneur après 5 secondes
-        setTimeout(() => {
-            resultsContainer.style.display = 'none';
-        }, 5000);
-    } else {
-        console.error('Élément resultsContainer non trouvé');
-    }
-});
+        // Événement pour afficher un message
+        socket.on('displayMessage', (message) => {
+            document.getElementById('messageBox').innerText = message;
+            document.getElementById('messageBox').style.display = 'block';
+        });
+
+        socket.on('updateHP', (hpData) => {
+            const hpContainer = document.getElementById('hpContainer');
+            hpContainer.innerHTML = ''; // Clear previous HP data
+
+            hpData.forEach(player => {
+                const hpElement = document.createElement('div');
+                hpElement.innerText = `${player.username}: ${player.hp} HP`;
+                hpContainer.appendChild(hpElement);
+            });
+        });
+
+
+        socket.on('startVerificationPhase', () => {
+            console.log('Début de la phase de vérification.');
+
+            document.getElementById('waitingMessage').style.display = 'none';
+            document.getElementById('adventurersWait').style.display = 'none';
+            document.getElementById('castleRooms').style.display = 'none';
+            // Tu peux afficher une nouvelle section pour la phase de vérification
+        });
+
+        socket.on('showResults', (results) => {
+            console.log('Résultats reçus:', results);
+
+            const waitingMessage = document.getElementById('waitingMessage');
+            const adventurersWait = document.getElementById('adventurersWait');
+            const unchosenPlayersList = document.getElementById('unchosenPlayersList');
+            const resultsContainer = document.getElementById('resultsContainer');
+
+            if (waitingMessage) waitingMessage.style.display = 'none';
+            if (adventurersWait) adventurersWait.style.display = 'none';
+            if (unchosenPlayersList) unchosenPlayersList.innerHTML = '';
+
+            if (resultsContainer) {
+                resultsContainer.style.display = 'block';
+
+                // Vider le contenu sans toucher au titre
+                const previousResults = resultsContainer.querySelectorAll('p');
+                previousResults.forEach(resultElement => resultElement.remove());
+
+                // Ajouter les nouveaux résultats
+                results.forEach(result => {
+                    const resultElement = document.createElement('p');
+                    resultElement.textContent = result;
+                    resultsContainer.appendChild(resultElement);
+                });
+
+                // Masquer le conteneur après 5 secondes
+                setTimeout(() => {
+                    resultsContainer.style.display = 'none';
+                }, 5000);
+            } else {
+                console.error('Élément resultsContainer non trouvé');
+            }
+        });
 
 
 
@@ -460,4 +488,5 @@ socket.on('showResults', (results) => {
         }
     </script>
 </body>
+
 </html>
