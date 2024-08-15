@@ -164,6 +164,7 @@
     </div>
 
 
+
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
@@ -208,6 +209,30 @@
             });
             document.getElementById('rooms').style.display = 'block';
         });
+
+        socket.on('keyFound', (data) => {
+    document.getElementById('notification').innerText = `Une clé a été trouvée dans ${data.roomName}! Il reste ${data.keysRemaining} clés à trouver.`;
+    // Effacer la notification après quelques secondes
+    setTimeout(() => {
+        document.getElementById('notification').innerText = '';
+    }, 5000);
+});
+
+socket.on('noKeyFound', () => {
+    document.getElementById('notification').innerText = `Aucune clé n'a été trouvée dans cette pièce.`;
+    // Effacer la notification après quelques secondes
+    setTimeout(() => {
+        document.getElementById('notification').innerText = '';
+    }, 5000);
+});
+
+socket.on('hunterKeyFound', (roomName) => {
+    document.getElementById('notification').innerText = `Une clé se trouve dans ${roomName}, mais vous ne pouvez pas la prendre.`;
+    setTimeout(() => {
+        document.getElementById('notification').innerText = '';
+    }, 5000);
+});
+
 
         function joinRoom(roomId) {
             socket.emit('joinRoom', { username, roomId }, (players) => {
