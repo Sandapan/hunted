@@ -162,6 +162,7 @@
     <div id="resultsContainer" style="display: none;">
         <h2>Résultats du tour</h2>
     </div>
+    <div id="notification" class="notification"></div>
 
 
 
@@ -210,6 +211,8 @@
             document.getElementById('rooms').style.display = 'block';
         });
 
+
+        // message avertissant les aventuriers qu'une clé a été trouvée dans une salle / combien de clés restantes
         socket.on('keyFound', (data) => {
     document.getElementById('notification').innerText = `Une clé a été trouvée dans ${data.roomName}! Il reste ${data.keysRemaining} clés à trouver.`;
     // Effacer la notification après quelques secondes
@@ -218,13 +221,26 @@
     }, 5000);
 });
 
-socket.on('noKeyFound', () => {
-    document.getElementById('notification').innerText = `Aucune clé n'a été trouvée dans cette pièce.`;
+// message avertissant les traqueurs que les aventuriers ont trouvé une clé
+socket.on('keyFoundForHunters', (data) => {
+    document.getElementById('notification').innerText = `Une clé a été trouvée par les aventuriers ! Empêchez-les de trouver les ${data.keysRemaining} clés restantes !`;
     // Effacer la notification après quelques secondes
     setTimeout(() => {
         document.getElementById('notification').innerText = '';
     }, 5000);
 });
+
+
+
+// Avertir les aventuriers qu'aucune clé n'a été trouvée.
+socket.on('noKeyFound', () => {
+    document.getElementById('notification').innerText = `Aucune clé n'a été trouvée ce tour-ci.`;
+    // Effacer la notification après quelques secondes
+    setTimeout(() => {
+        document.getElementById('notification').innerText = '';
+    }, 5000);
+});
+
 
 socket.on('hunterKeyFound', (roomName) => {
     document.getElementById('notification').innerText = `Une clé se trouve dans ${roomName}, mais vous ne pouvez pas la prendre.`;
