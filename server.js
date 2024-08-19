@@ -218,13 +218,18 @@ io.on('connection', (socket) => {
     socket.on('chooseRoom', ({ roomId, roomIndex }) => {
         const playerId = socket.id; // Assure-toi d'utiliser l'ID de socket du joueur
         console.log(`Player ${playerId} a choisi la salle ${roomIndex} dans la room ${roomId}`);
-        
+    
         if (rooms[roomId]) {
             rooms[roomId].choices[playerId] = roomIndex;
     
             const randomItem = getRandomItem();
-            // Envoyer l'objet trouvé uniquement au joueur concerné
-            io.to(playerId).emit('itemFound', randomItem);
+            
+                // Ajout d'un log pour vérifier à qui est émis l'item
+                console.log(`Envoi de l'item "${randomItem.name}" au joueur ${playerId}`);
+    
+    
+            // Envoyer l'objet trouvé uniquement au joueur concerné avec son ID
+            io.to(playerId).emit('itemFound', { ...randomItem, playerId });
     
             setTimeout(() => {
                 io.to(playerId).emit('finishAdventurerTurn');
@@ -233,6 +238,8 @@ io.on('connection', (socket) => {
         }
     });
     
+    
+
     
     function applyItemEffect(roomId, playerId, item) {
         const player = rooms[roomId].players.find(p => p.id === playerId);

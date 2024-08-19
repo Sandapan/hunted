@@ -536,7 +536,14 @@ socket.on('hunterKeyFound', (roomName) => {
         // GESTION INVENTAIRE 
 
 // Gérer la réception d'un objet trouvé
+
+// Code Client : Écoute de l'événement 'itemFound'
 socket.on('itemFound', (item) => {
+    // S'assurer que l'événement est bien destiné au client actuel
+    if (item.playerId !== socket.id) {
+        return; // Ignorer si ce n'est pas le joueur concerné
+    }
+
     // Partie 1 : Afficher la notification temporaire
     const notificationElement = document.getElementById('notification');
     notificationElement.innerHTML = `
@@ -562,6 +569,7 @@ socket.on('itemFound', (item) => {
         socket.emit('finishAdventurerTurn', { roomId: currentRoomId, playerId: socket.id });
     }, 5000);
 });
+
 
 
     </script>
