@@ -163,6 +163,10 @@
         <h2>Résultats du tour</h2>
     </div>
     <div id="notification" class="notification"></div>
+    <div id="inventory" style="display: none;">
+        <h2>Votre Inventaire</h2>
+        <div id="itemsList"></div>
+    </div>
 
 
 
@@ -527,6 +531,39 @@ socket.on('hunterKeyFound', (roomName) => {
 
             document.getElementById('adventurersWait').style.display = 'none'; // <- A ENLEVER SI PROBLEMES
         }
+
+
+        // GESTION INVENTAIRE 
+
+// Gérer la réception d'un objet trouvé
+socket.on('itemFound', (item) => {
+    // Partie 1 : Afficher la notification temporaire
+    const notificationElement = document.getElementById('notification');
+    notificationElement.innerHTML = `
+        <img src="${item.image}" alt="${item.name}" style="width: 50px; height: 50px;">
+        <p>Vous fouillez la pièce et trouvez l'objet "<strong>${item.name}</strong>" !</p>
+        <p>${item.description}</p>
+    `;
+    notificationElement.style.display = 'block';
+
+    // Partie 2 : Ajouter l'objet à l'inventaire du joueur
+    document.getElementById('inventory').style.display = 'block';
+    const itemsList = document.getElementById('itemsList');
+    const itemElement = document.createElement('div');
+    itemElement.innerHTML = `
+        <img src="${item.image}" alt="${item.name}" style="width: 50px; height: 50px;">
+        <span>${item.name}</span>
+    `;
+    itemsList.appendChild(itemElement);
+
+    // Partie 3 : Effacer la notification et attendre avant de passer aux traqueurs
+    setTimeout(() => {
+        notificationElement.style.display = 'none';
+        socket.emit('finishAdventurerTurn', { roomId: currentRoomId, playerId: socket.id });
+    }, 5000);
+});
+
+
     </script>
 </body>
 
