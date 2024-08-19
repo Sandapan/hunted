@@ -160,8 +160,8 @@ io.on('connection', (socket) => {
         callback(roomId);
         io.emit('roomsList', Object.keys(rooms).map(id => ({ id, host: rooms[id].hostUsername })));
     });
-    
-    
+
+
 
 
     socket.on('getRooms', () => {
@@ -186,11 +186,11 @@ io.on('connection', (socket) => {
             socket.join(roomId);
             callback(rooms[roomId].players);
             io.in(roomId).emit('updatePlayers', rooms[roomId].players);
-    
+
             socket.emit('chooseRoleClass');
         }
     });
-    
+
 
     socket.on('chooseClass', ({ username, role, className, roomId }, callback) => {
         console.log(`Received chooseClass: role=${role}, className=${className}, roomId=${roomId}`);
@@ -218,40 +218,47 @@ io.on('connection', (socket) => {
     socket.on('chooseRoom', ({ roomId, roomIndex }) => {
         const playerId = socket.id;
         console.log(`Player ${playerId} a choisi la salle ${roomIndex} dans la room ${roomId}`);
-    
+
         if (rooms[roomId]) {
             rooms[roomId].choices[playerId] = roomIndex;
-    
+
             const randomItem = getRandomItem();
-    
+
             // Trouver le joueur pour obtenir son montant d'or actuel
             const player = rooms[roomId].players.find(p => p.id === playerId);
-    
+
             // Appliquer l'effet de l'objet si disponible
             if (randomItem.effect) {
                 randomItem.effect(player); // Appliquer l'effet à l'objet
             }
-    
+
             // Assurer que l'objet trouvé et le montant d'or sont bien envoyés au joueur concerné
             io.to(playerId).emit('itemFound', {
-                ...randomItem, 
+                ...randomItem,
                 currentGold: player.gold,
                 playerId: playerId // Ajout de playerId pour vérifier que le bon joueur reçoit l'info
             });
-    
+
+            // Diffuser l'information de l'objet trouvé à tous les joueurs, mais sans leur donner l'objet
+            socket.broadcast.to(roomId).emit('notifyItemFound', {
+                itemName: randomItem.name,
+                playerId: playerId // Pour dire quel joueur a trouvé l'objet
+            });
+
+            // Vérifier si tous les aventuriers ont terminé leur tour
             setTimeout(() => {
-                io.to(playerId).emit('finishAdventurerTurn');
                 checkAllAdventurersChosen(roomId);
             }, 5000);
         }
     });
-    
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
+
 
     // fonction à changer 
     function applyItemEffect(roomId, playerId, item) {
@@ -261,46 +268,10 @@ io.on('connection', (socket) => {
             console.log(`Effet de l'objet "${item.name}" appliqué à ${player.username}`);
         }
     }
-    
-    
-    
-    socket.on('itemFound', (item) => {
-        // Partie 1 : Afficher la notification temporaire
-        const notificationElement = document.getElementById('notification');
-        notificationElement.innerHTML = `
-            <img src="${item.image}" alt="${item.name}" style="width: 50px; height: 50px;">
-            <p>Vous fouillez la pièce et trouvez l'objet "<strong>${item.name}</strong>" !</p>
-            <p>${item.description}</p>
-            <button id="useItem">Utiliser l'objet</button>
-            <button id="discardItem">Jeter l'objet</button>
-        `;
-        notificationElement.style.display = 'block';
-    
-        // Afficher l'inventaire du joueur
-        document.getElementById('inventory').style.display = 'block';
-        const itemsList = document.getElementById('itemsList');
-        const itemElement = document.createElement('div');
-        itemElement.innerHTML = `
-            <img src="${item.image}" alt="${item.name}" style="width: 50px; height: 50px;">
-            <span>${item.name}</span>
-        `;
-        itemsList.appendChild(itemElement);
-    
-        // Gérer les actions des boutons
-        document.getElementById('useItem').onclick = () => {
-            applyItemEffect(item); // Appliquer l'effet de l'objet
-            notificationElement.style.display = 'none';
-            document.getElementById('inventory').style.display = 'none';
-            socket.emit('finishAdventurerTurn', { roomId: currentRoomId, playerId: socket.id });
-        };
-    
-        document.getElementById('discardItem').onclick = () => {
-            notificationElement.style.display = 'none';
-            document.getElementById('inventory').style.display = 'none';
-            socket.emit('finishAdventurerTurn', { roomId: currentRoomId, playerId: socket.id });
-        };
-    });
-    
+
+
+
+
     function applyItemEffect(item) {
         const player = {
             id: socket.id,
@@ -311,18 +282,33 @@ io.on('connection', (socket) => {
             console.log(`Effet de l'objet "${item.name}" appliqué à ${player.username}`);
         }
     }
-    
-    // Fonction pour obtenir un item aléatoire
-function getRandomItem() {
-    const randomIndex = Math.floor(Math.random() * items.length);
-    return items[randomIndex];
-}
 
-    
+    // Fonction pour obtenir un item aléatoire
+    function getRandomItem() {
+        const randomIndex = Math.floor(Math.random() * items.length);
+        return items[randomIndex];
+    }
+
+
+    // Code pour gérer la fin du tour d'un joueur
+    socket.on('finishAdventurerTurn', ({ roomId, playerId }) => {
+        console.log(`Le joueur ${playerId} a terminé son tour dans la salle ${roomId}`);
+
+        if (rooms[roomId]) {
+            // Ajouter le joueur aux choix effectués s'il ne l'était pas déjà
+            if (!(playerId in rooms[roomId].choices)) {
+                rooms[roomId].choices[playerId] = true;
+            }
+
+            // Appeler la fonction pour vérifier si tous les aventuriers ont terminé leur tour
+            checkAllAdventurersChosen(roomId);
+        }
+    });
+
     function checkAllAdventurersChosen(roomId) {
         let allAdventurersChosen = true;
         let unchosenAdventurers = [];
-    
+
         for (let player of rooms[roomId].players) {
             if (player.role === 'aventurier' && !(player.id in rooms[roomId].choices)) {
                 allAdventurersChosen = false;
@@ -330,55 +316,57 @@ function getRandomItem() {
             }
         }
         console.log(`Unchosen adventurers: ${unchosenAdventurers}`);
-    
+
         if (allAdventurersChosen) {
             rooms[roomId].adventurersChosen = true;
-            console.log(`Tous les aventuriers ont choisi, vérification des clés...`);
-    
+            console.log(`Tous les aventuriers ont terminé leur tour, vérification des clés...`);
+
             checkForKey(roomId);
-    
+
             io.in(roomId).emit('waitAdventurers');
             io.in(roomId).emit('startTraqueursTurn');
         } else {
+            // Si tous les aventuriers n'ont pas terminé, envoyer la liste des joueurs en attente
             io.in(roomId).emit('waitingForPlayers', unchosenAdventurers);
         }
     }
-    
-    
 
-socket.on('chooseHunterRoom', ({ roomId, playerId, roomIndex }) => {
-    console.log(`chooseHunterRoom reçu: roomId=${roomId}, playerId=${playerId}, roomIndex=${roomIndex}`);
-    if (rooms[roomId] && rooms[roomId].adventurersChosen) { 
-        rooms[roomId].choices[playerId] = roomIndex;
 
-        // Notifier le traqueur s'il a trouvé une clé
-        const room = rooms[roomId];
-        if (room.keyLocation === roomIndex) {
-            io.to(playerId).emit('hunterKeyFound', roomNames[roomIndex]);
-            console.log(`Un traqueur a découvert une clé dans ${roomNames[roomIndex]}, mais ne peut pas la prendre.`);
-        }
 
-        let allHuntersChosen = true;
-        let unchosenHunters = [];
-        for (let player of rooms[roomId].players) {
-            if (player.role === 'traqueur' && !(player.id in rooms[roomId].choices)) {
-                allHuntersChosen = false;
-                unchosenHunters.push(player.username);
+    socket.on('chooseHunterRoom', ({ roomId, playerId, roomIndex }) => {
+        console.log(`chooseHunterRoom reçu: roomId=${roomId}, playerId=${playerId}, roomIndex=${roomIndex}`);
+        if (rooms[roomId] && rooms[roomId].adventurersChosen) {
+            rooms[roomId].choices[playerId] = roomIndex;
+
+            // Notifier le traqueur s'il a trouvé une clé
+            const room = rooms[roomId];
+            if (room.keyLocation === roomIndex) {
+                io.to(playerId).emit('hunterKeyFound', roomNames[roomIndex]);
+                console.log(`Un traqueur a découvert une clé dans ${roomNames[roomIndex]}, mais ne peut pas la prendre.`);
+            }
+
+            let allHuntersChosen = true;
+            let unchosenHunters = [];
+            for (let player of rooms[roomId].players) {
+                if (player.role === 'traqueur' && !(player.id in rooms[roomId].choices)) {
+                    allHuntersChosen = false;
+                    unchosenHunters.push(player.username);
+                }
+            }
+            console.log(`Unchosen hunters: ${unchosenHunters}`);
+
+            if (allHuntersChosen) {
+                console.log(`Tous les traqueurs ont choisi, début de la phase de vérification`);
+                checkResults(roomId);
+            } else {
+                io.in(roomId).emit('waitingForPlayers', unchosenHunters);
             }
         }
-        console.log(`Unchosen hunters: ${unchosenHunters}`);
-
-        if (allHuntersChosen) {
-            console.log(`Tous les traqueurs ont choisi, début de la phase de vérification`);
-            checkResults(roomId); 
-        } else {
-            io.in(roomId).emit('waitingForPlayers', unchosenHunters);
-        }
-    }
-});
+    });
 
 
-    
+
+
 
 
     function startTraqueursTurn(roomId) {
@@ -396,22 +384,22 @@ socket.on('chooseHunterRoom', ({ roomId, playerId, roomIndex }) => {
                     player.gold = 0; // Or initialisé à 0
                 }
             });
-    
+
             io.in(roomId).emit('gameStarted');
             console.log(`La partie dans la salle ${roomId} a commencé.`);
-            
+
             // Initialisation des clés
             room.keysFound = 0;
             room.totalKeysRequired = room.players.filter(p => p.role === 'aventurier').length;
             room.keyLocation = null;
-    
+
             io.in(roomId).emit('startAdventurersTurn');
-    
+
             // Cache la première clé
             hideNewKey(roomId);
         }
     });
-    
+
 
     socket.on('disconnect', () => {
         console.log('user disconnected');
@@ -433,31 +421,31 @@ socket.on('chooseHunterRoom', ({ roomId, playerId, roomIndex }) => {
 function checkResults(roomId) {
     const room = rooms[roomId];
     console.log('checkResults appelée pour la salle:', roomId);
-    
+
     if (!room) {
         console.error('Salle introuvable:', roomId);
         return;
     }
 
     const results = [];
-    
+
     // Parcourir toutes les pièces choisies par les traqueurs
     room.players.forEach(hunter => {
         if (hunter.role === 'traqueur') {
             const hunterRoom = room.choices[hunter.id];
             const foundAdventurers = [];
-            
+
             // Vérifier si un aventurier se trouve dans la même pièce
             room.players.forEach(adventurer => {
                 if (adventurer.role === 'aventurier' && room.choices[adventurer.id] === hunterRoom) {
                     foundAdventurers.push(adventurer.username);
                 }
             });
-            
+
             if (foundAdventurers.length > 0) {
                 const roomName = roomNames[hunterRoom];
                 let adventurerList = '';
-            
+
                 if (foundAdventurers.length === 1) {
                     adventurerList = foundAdventurers[0];
                 } else if (foundAdventurers.length === 2) {
@@ -465,9 +453,9 @@ function checkResults(roomId) {
                 } else {
                     adventurerList = `${foundAdventurers.slice(0, -1).join(', ')} et ${foundAdventurers[foundAdventurers.length - 1]}`;
                 }
-            
+
                 results.push(`${hunter.username} a trouvé ${adventurerList} dans ${roomName}`);
-                
+
                 // Réduire les points de vie des aventuriers trouvés
                 foundAdventurers.forEach(adventurerUsername => {
                     const adventurer = room.players.find(player => player.username === adventurerUsername);
@@ -479,10 +467,10 @@ function checkResults(roomId) {
                         }
                     }
                 });
-            
+
                 // Envoyer une mise à jour des points de vie à tous les joueurs
                 updateHPForAll(roomId);
-            }    
+            }
         }
     });
 
@@ -507,11 +495,11 @@ function checkResults(roomId) {
 function startNewTurn(roomId) {
     console.log("Starting new turn for room:", roomId); // Ajoutez ceci pour vérifier
     const room = rooms[roomId];
-    
+
     // Réinitialiser les choix de pièces pour tous les joueurs
     room.choices = {};
     room.adventurersChosen = false;
-    
+
     // Incrémenter le compteur de tours
     room.turnCounter += 1;
 
