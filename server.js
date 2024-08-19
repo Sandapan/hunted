@@ -216,20 +216,28 @@ io.on('connection', (socket) => {
     });
 
     socket.on('chooseRoom', ({ roomId, roomIndex }) => {
-        const playerId = socket.id; // Assure-toi d'utiliser l'ID de socket du joueur
+        const playerId = socket.id;
         console.log(`Player ${playerId} a choisi la salle ${roomIndex} dans la room ${roomId}`);
     
         if (rooms[roomId]) {
             rooms[roomId].choices[playerId] = roomIndex;
     
             const randomItem = getRandomItem();
-            
-                // Ajout d'un log pour vérifier à qui est émis l'item
-                console.log(`Envoi de l'item "${randomItem.name}" au joueur ${playerId}`);
     
+            // Trouver le joueur pour obtenir son montant d'or actuel
+            const player = rooms[roomId].players.find(p => p.id === playerId);
     
-            // Envoyer l'objet trouvé uniquement au joueur concerné avec son ID
-            io.to(playerId).emit('itemFound', { ...randomItem, playerId });
+            // Appliquer l'effet de l'objet si disponible
+            if (randomItem.effect) {
+                randomItem.effect(player); // Appliquer l'effet à l'objet
+            }
+    
+            // Assurer que l'objet trouvé et le montant d'or sont bien envoyés au joueur concerné
+            io.to(playerId).emit('itemFound', {
+                ...randomItem, 
+                currentGold: player.gold,
+                playerId: playerId // Ajout de playerId pour vérifier que le bon joueur reçoit l'info
+            });
     
             setTimeout(() => {
                 io.to(playerId).emit('finishAdventurerTurn');
@@ -239,8 +247,13 @@ io.on('connection', (socket) => {
     });
     
     
-
     
+    
+    
+    
+    
+
+    // fonction à changer 
     function applyItemEffect(roomId, playerId, item) {
         const player = rooms[roomId].players.find(p => p.id === playerId);
         if (player && item.effect) {

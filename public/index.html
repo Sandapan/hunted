@@ -165,8 +165,11 @@
     <div id="notification" class="notification"></div>
     <div id="inventory" style="display: none;">
         <h2>Votre Inventaire</h2>
+        <!-- Cet élément affichera le montant d'or -->
+        <p id="goldAmount"></p>
         <div id="itemsList"></div>
     </div>
+     
 
 
 
@@ -555,6 +558,19 @@ socket.on('itemFound', (item) => {
 
     // Partie 2 : Ajouter l'objet à l'inventaire du joueur
     document.getElementById('inventory').style.display = 'block';
+    
+    // Mettre à jour l'affichage du montant d'or
+    const goldElement = document.getElementById('goldAmount');
+    if (goldElement) {
+        goldElement.textContent = `Or : ${item.currentGold} pièces`;
+    } else {
+        const goldDisplay = document.createElement('p');
+        goldDisplay.id = 'goldAmount';
+        goldDisplay.textContent = `Or : ${item.currentGold} pièces`;
+        itemsList.parentElement.insertBefore(goldDisplay, itemsList);
+    }
+
+    // Ajouter l'objet à l'inventaire du joueur
     const itemsList = document.getElementById('itemsList');
     const itemElement = document.createElement('div');
     itemElement.innerHTML = `
@@ -565,9 +581,13 @@ socket.on('itemFound', (item) => {
 
     // Partie 3 : Effacer la notification et attendre avant de passer aux traqueurs
     setTimeout(() => {
+        // Masquer la notification
         notificationElement.style.display = 'none';
+
+        // Notifier le serveur que le tour est terminé
         socket.emit('finishAdventurerTurn', { roomId: currentRoomId, playerId: socket.id });
-    }, 5000);
+
+    }, 5000); // Laisser suffisamment de temps pour afficher les informations
 });
 
 
