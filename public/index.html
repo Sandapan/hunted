@@ -43,7 +43,6 @@
         <button onclick="changeClass()">Changer de classe</button>
     </div>
     <div id="turnCounter" style="display: none;">Tour 1</div>
-    <div id="hpContainer"></div>
     <div id="traqueursWait" class="waiting-container">
         <h2>Veuillez attendre que les aventuriers jouent leur tour</h2>
         <img src="/images/hourglass.gif" alt="Hourglass">
@@ -403,17 +402,6 @@
         socket.on('displayMessage', (message) => {
             document.getElementById('messageBox').innerText = message;
             document.getElementById('messageBox').style.display = 'block';
-        });
-
-        socket.on('updateHP', (hpData) => {
-            const hpContainer = document.getElementById('hpContainer');
-            hpContainer.innerHTML = ''; // Clear previous HP data
-
-            hpData.forEach(player => {
-                const hpElement = document.createElement('div');
-                hpElement.innerText = `${player.username}: ${player.hp} HP`;
-                hpContainer.appendChild(hpElement);
-            });
         });
 
 

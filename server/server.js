@@ -423,10 +423,15 @@ function checkResults(roomId) {
 
                 if (foundAdventurers.length === 1) {
                     adventurerList = foundAdventurers[0];
+                    
+
                 } else if (foundAdventurers.length === 2) {
                     adventurerList = `${foundAdventurers[0]} et ${foundAdventurers[1]}`;
+                    
+
                 } else {
                     adventurerList = `${foundAdventurers.slice(0, -1).join(', ')} et ${foundAdventurers[foundAdventurers.length - 1]}`;
+                    
                 }
 
                 results.push(`${hunter.username} a trouvé ${adventurerList} dans ${roomName}`);
@@ -436,6 +441,7 @@ function checkResults(roomId) {
                     const adventurer = room.players.find(player => player.username === adventurerUsername);
                     if (adventurer) {
                         adventurer.hp -= 1;
+                        io.in(roomId).emit('updatePlayers', rooms[roomId].players);
                         if (adventurer.hp <= 0) {
                             // Gérer le cas où un aventurier n'a plus de points de vie
                             results.push(`${adventurer.username} a été éliminé!`);
@@ -493,7 +499,7 @@ function updateHPForAll(roomId) {
         username: player.username,
         hp: player.hp
     }));
-    io.in(roomId).emit('updateHP', hpData);
+    io.in(roomId).emit('updatePlayers', rooms[roomId].players);
 }
 
 
