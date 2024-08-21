@@ -480,6 +480,8 @@ function startNewTurn(roomId) {
 
     // Envoyer l'information du nouveau tour aux joueurs
     io.in(roomId).emit('updateTurnCounter', room.turnCounter);
+    io.in(roomId).emit('updatePlayers', rooms[roomId].players);
+
 
     // Débuter le tour des aventuriers
     io.in(roomId).emit('startAdventurersTurn');

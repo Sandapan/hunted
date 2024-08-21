@@ -238,20 +238,27 @@
 
         function updatePlayers(players) {
             const playersList = document.getElementById('players');
-            playersList.innerHTML = '';
+            playersList.innerHTML = ''; // Efface le contenu précédent de la liste des joueurs
+
             players.forEach(player => {
-                const li = document.createElement('li');
-                li.innerText = `${player.username} (${player.role}, ${player.className})`;
+                const li = document.createElement('li'); // Crée un nouvel élément de liste pour chaque joueur
+
+                // Définit le texte de l'élément de liste avec le nom d'utilisateur, le rôle, la classe et les points de vie
+                li.innerText = `${player.username} (${player.role}, ${player.className}) - ${player.hp} HP`;
+
                 if (player.role && player.className) {
-                    const img = document.createElement('img');
-                    img.src = `/images/${player.className.toLowerCase()}.gif`;
-                    img.style = 'width: 50px; height: 50px';
-                    img.alt = player.className;
-                    li.appendChild(img);
+                    const img = document.createElement('img'); // Crée une image pour le joueur
+                    img.src = `/images/${player.className.toLowerCase()}.gif`; // Définit la source de l'image en fonction de la classe du joueur
+                    img.style = 'width: 50px; height: 50px'; // Définit la taille de l'image
+                    img.alt = player.className; // Définit le texte alternatif de l'image
+                    li.appendChild(img); // Ajoute l'image à l'élément de liste
                 }
-                playersList.appendChild(li);
+
+                playersList.appendChild(li); // Ajoute l'élément de liste à la liste des joueurs
             });
         }
+
+
 
         socket.on('updateTurnCounter', (turnCounter) => {
             document.getElementById('turnCounter').textContent = `Tour ${turnCounter}`;
