@@ -193,39 +193,31 @@ io.on('connection', (socket) => {
     socket.on('chooseRoom', ({ roomId, roomIndex }) => {
         const playerId = socket.id;
         console.log(`Player ${playerId} a choisi la salle ${roomIndex} dans la room ${roomId}`);
-
+    
         if (rooms[roomId]) {
             rooms[roomId].choices[playerId] = roomIndex;
-
+    
             const randomItem = getRandomItem();
-
-            // Trouver le joueur pour obtenir son montant d'or actuel
             const player = rooms[roomId].players.find(p => p.id === playerId);
-
-            // Appliquer l'effet de l'objet si disponible
+    
             if (randomItem.effect) {
-                randomItem.effect(player); // Appliquer l'effet à l'objet
+                randomItem.effect(player);
             }
-
-            // Assurer que l'objet trouvé et le montant d'or sont bien envoyés au joueur concerné
+    
             io.to(playerId).emit('itemFound', {
                 ...randomItem,
                 currentGold: player.gold,
-                playerId: playerId // Ajout de playerId pour vérifier que le bon joueur reçoit l'info
+                playerId: playerId
             });
-
-            // Diffuser l'information de l'objet trouvé à tous les joueurs, mais sans leur donner l'objet
+    
             socket.broadcast.to(roomId).emit('notifyItemFound', {
                 itemName: randomItem.name,
-                playerId: playerId // Pour dire quel joueur a trouvé l'objet
+                playerId: playerId
             });
 
-            // Vérifier si tous les aventuriers ont terminé leur tour
-            setTimeout(() => {
-                checkAllAdventurersChosen(roomId);
-            }, 5000);
         }
     });
+    
 
 // OK
 

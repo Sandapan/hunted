@@ -265,11 +265,23 @@
 
 
         function startGame() {
+            // Masquer les boutons en ajoutant la classe 'hidden'
+            document.getElementById('startGame').classList.add('hidden');
+            document.getElementById('deleteRoom').classList.add('hidden');
+            document.querySelector('button[onclick="changeRole()"]').classList.add('hidden');
+            document.querySelector('button[onclick="changeClass()"]').classList.add('hidden');
+
+            // Émettre l'événement pour démarrer le jeu
             socket.emit('startGame', currentRoomId);
         }
 
+
         socket.on('gameStarted', () => {
             // Afficher le compteur de tours
+            document.getElementById('startGame').classList.add('hidden');
+            document.getElementById('deleteRoom').classList.add('hidden');
+            document.querySelector('button[onclick="changeRole()"]').classList.add('hidden');
+            document.querySelector('button[onclick="changeClass()"]').classList.add('hidden');
             const turnDisplay = document.getElementById('turnCounter');
             if (turnDisplay) {
                 turnDisplay.style.display = 'block';
