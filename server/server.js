@@ -200,23 +200,26 @@ io.on('connection', (socket) => {
             const randomItem = getRandomItem();
             const player = rooms[roomId].players.find(p => p.id === playerId);
     
-            if (randomItem.effect) {
-                randomItem.effect(player);
+            // Appliquer l'effet si l'item impacte l'or
+            if (['Petite bourse d\'or', 'Fortune', 'Somptueux trésor'].includes(randomItem.name)) {
+                randomItem.effect(player); // Mise à jour de l'or
             }
     
+            // Envoyer l'item au client et inclure l'or mis à jour
             io.to(playerId).emit('itemFound', {
                 ...randomItem,
-                currentGold: player.gold,
+                currentGold: player.gold, // Envoyer l'or mis à jour
                 playerId: playerId
             });
     
+            // Notifier les autres joueurs qu'un item a été trouvé
             socket.broadcast.to(roomId).emit('notifyItemFound', {
                 itemName: randomItem.name,
                 playerId: playerId
             });
-
         }
     });
+    
     
 
 // OK
@@ -246,7 +249,7 @@ io.on('connection', (socket) => {
         };
         if (item.effect) {
             item.effect(player); // Appliquer l'effet de l'objet au joueur
-            console.log(`Effet de l'objet "${item.name}" appliqué à ${player.username}`);
+            console.log(`Effet de l'objet "${item.name}" appliquay à ${player.username}`);
         }
     }
 

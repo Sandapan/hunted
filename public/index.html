@@ -474,97 +474,97 @@
 
         // GESTION INVENTAIRE 
 
-        // Gérer la réception d'un objet trouvé
-
-        // Code Client : Écoute de l'événement 'itemFound'
         socket.on('itemFound', (item) => {
-            // S'assurer que l'événement est bien destiné au client actuel
-            if (item.playerId !== socket.id) {
-                return; // Ignorer si ce n'est pas le joueur concerné
-            }
+    // S'assurer que l'événement est bien destiné au client actuel
+    if (item.playerId !== socket.id) {
+        return; // Ignorer si ce n'est pas le joueur concerné
+    }
 
-            // Partie 1 : Afficher la notification temporaire
-            const notificationElement = document.getElementById('notification');
-            notificationElement.innerHTML = `
+    // Partie 1 : Afficher la notification temporaire
+    const notificationElement = document.getElementById('notification');
+    notificationElement.innerHTML = `
         <img src="${item.image}" alt="${item.name}" style="width: 50px; height: 50px;">
         <p>Vous fouillez la pièce et trouvez l'objet "<strong>${item.name}</strong>" !</p>
         <p>${item.description}</p>
     `;
-            notificationElement.style.display = 'block';
+    notificationElement.style.display = 'block';
 
-            // Masquer la notification après 5 secondes
-            setTimeout(() => {
-                notificationElement.style.display = 'none';
-            }, 5000);
+    // Masquer la notification après 5 secondes
+    setTimeout(() => {
+        notificationElement.style.display = 'none';
+    }, 5000);
 
-            // Partie 2 : Ajouter l'objet à l'inventaire du joueur
+    // Vérifier si l'item est un item d'or
+    const isGoldItem = item.name === 'Petite bourse d\'or' || item.name === 'Fortune' || item.name === 'Somptueux trésor';
+
+    if (isGoldItem) {
+        // Mettre à jour l'affichage du montant d'or dans l'inventaire
+        const goldElement = document.getElementById('goldAmount');
+        if (goldElement) {
+            goldElement.textContent = `Or : ${item.currentGold} pièces`;
+        } else {
+            const goldDisplay = document.createElement('p');
+            goldDisplay.id = 'goldAmount';
+            goldDisplay.textContent = `Or : ${item.currentGold} pièces`;
             const itemsList = document.getElementById('itemsList');
-            const itemElement = document.createElement('div');
-            itemElement.classList.add('inventory-item');
-            itemElement.innerHTML = `
-        <img src="${item.image}" alt="${item.name}" style="width: 50px; height: 50px;">
-        <span>${item.name}</span>
-        <button class="useItem">Utiliser l'objet</button>
-        <button class="discardItem">Jeter l'objet</button>
-    `;
-            itemsList.appendChild(itemElement);
+            itemsList.parentElement.insertBefore(goldDisplay, itemsList);
+        }
+    } else {
+        // Partie 2 : Ajouter l'objet à l'inventaire du joueur
+        const itemsList = document.getElementById('itemsList');
+        const itemElement = document.createElement('div');
+        itemElement.classList.add('inventory-item');
+        itemElement.innerHTML = `
+            <img src="${item.image}" alt="${item.name}" style="width: 50px; height: 50px;">
+            <span>${item.name}</span>
+            <button class="useItem">Utiliser l'objet</button>
+            <button class="discardItem">Jeter l'objet</button>
+        `;
+        itemsList.appendChild(itemElement);
 
-            // Mettre à jour l'affichage du montant d'or
-            const goldElement = document.getElementById('goldAmount');
-            if (goldElement) {
-                goldElement.textContent = `Or : ${item.currentGold} pièces`;
-            } else {
-                const goldDisplay = document.createElement('p');
-                goldDisplay.id = 'goldAmount';
-                goldDisplay.textContent = `Or : ${item.currentGold} pièces`;
-                itemsList.parentElement.insertBefore(goldDisplay, itemsList);
-            }
+        // Afficher l'inventaire du joueur
+        document.getElementById('inventory').style.display = 'block';
 
-            // Afficher l'inventaire du joueur
-            document.getElementById('inventory').style.display = 'block';
-
-            // Partie 3 : Gérer les actions des boutons pour cet objet spécifique
-            itemElement.querySelector('.useItem').onclick = () => {
-                applyItemEffect(item); // Appliquer l'effet de l'objet
-                itemsList.removeChild(itemElement); // Retirer l'élément de l'inventaire
-                notificationElement.style.display = 'none';
-            };
-
-            itemElement.querySelector('.discardItem').onclick = () => {
-                itemsList.removeChild(itemElement); // Retirer l'élément de l'inventaire
-                notificationElement.style.display = 'none';
-            };
-
-            // Partie 4 : Gérer le bouton "Terminer son tour"
-            const endTurnButton = document.getElementById('endTurn');
-            endTurnButton.style.display = 'block'; // Afficher le bouton
-
-            endTurnButton.onclick = () => {
-                socket.emit('finishAdventurerTurn', { roomId: currentRoomId, playerId: socket.id });
-                document.getElementById('inventory').style.display = 'none';
-                endTurnButton.style.display = 'none'; // Cacher le bouton après son utilisation
-            };
-        });
-
-        // Il ne faut pas oublier de gérer manuellement la fin du tour ailleurs, par exemple avec un bouton général de fin de tour
-        document.getElementById('endTurnButton').onclick = () => {
-            socket.emit('finishAdventurerTurn', { roomId: currentRoomId, playerId: socket.id });
-            // Autres actions à réaliser en fin de tour
+        // Partie 3 : Gérer les actions des boutons pour cet objet spécifique
+        itemElement.querySelector('.useItem').onclick = () => {
+            applyItemEffect(item); // Appliquer l'effet de l'objet
+            itemsList.removeChild(itemElement); // Retirer l'élément de l'inventaire
+            notificationElement.style.display = 'none';
         };
 
+        itemElement.querySelector('.discardItem').onclick = () => {
+            itemsList.removeChild(itemElement); // Retirer l'élément de l'inventaire
+            notificationElement.style.display = 'none';
+        };
+    }
+
+    // Partie 4 : Afficher le bouton "Terminer son tour"
+    const endTurnButton = document.getElementById('endTurn');
+    endTurnButton.style.display = 'block'; // Toujours afficher le bouton, même pour les items d'or
+
+    endTurnButton.onclick = () => {
+        socket.emit('finishAdventurerTurn', { roomId: currentRoomId, playerId: socket.id });
+        document.getElementById('inventory').style.display = 'none';
+        endTurnButton.style.display = 'none'; // Cacher le bouton après son utilisation
+    };
+
+    // Assurer que l'inventaire est visible, même pour les items d'or
+    document.getElementById('inventory').style.display = 'block';
+});
+
+// Fonction pour appliquer l'effet de l'objet
+function applyItemEffect(item) {
+    const player = {
+        id: socket.id,
+        username: username // Informations supplémentaires sur le joueur si nécessaire
+    };
+    if (item.effect) {
+        item.effect(player); // Appliquer l'effet de l'objet au joueur
+        console.log(`Effet de l'objet "${item.name}" appliqué à ${player.username}`);
+    }
+}
 
 
-        // Fonction pour appliquer l'effet de l'objet
-        function applyItemEffect(item) {
-            const player = {
-                id: socket.id,
-                username: username // Informations supplémentaires sur le joueur si nécessaire
-            };
-            if (item.effect) {
-                item.effect(player); // Appliquer l'effet de l'objet au joueur
-                console.log(`Effet de l'objet "${item.name}" appliqué à ${player.username}`);
-            }
-        }
 
 
 
