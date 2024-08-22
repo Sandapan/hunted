@@ -525,12 +525,20 @@
         // Afficher l'inventaire du joueur
         document.getElementById('inventory').style.display = 'block';
 
-        // Partie 3 : Gérer les actions des boutons pour cet objet spécifique
-        itemElement.querySelector('.useItem').onclick = () => {
-            applyItemEffect(item); // Appliquer l'effet de l'objet
-            itemsList.removeChild(itemElement); // Retirer l'élément de l'inventaire
-            notificationElement.style.display = 'none';
-        };
+       // Partie 3 : Gérer les actions des boutons pour cet objet spécifique
+itemElement.querySelector('.useItem').onclick = () => {
+    socket.emit('useItem', {
+        itemName: item.name, 
+        roomId: currentRoomId
+    });
+
+    // Optionnel : retirer l'item de l'affichage immédiatement après utilisation
+    itemsList.removeChild(itemElement);
+    notificationElement.style.display = 'none';
+};
+
+// La fonction `applyItemEffect` n'est plus nécessaire côté client, sauf pour les effets visuels temporaires
+
 
         itemElement.querySelector('.discardItem').onclick = () => {
             itemsList.removeChild(itemElement); // Retirer l'élément de l'inventaire
@@ -553,19 +561,12 @@
 });
 
 // Fonction pour appliquer l'effet de l'objet
+// Fonction côté client pour des effets visuels ou temporaires
 function applyItemEffect(item) {
-    const player = {
-        id: socket.id,
-        username: username // Informations supplémentaires sur le joueur si nécessaire
-    };
-    if (item.effect) {
-        item.effect(player); // Appliquer l'effet de l'objet au joueur
-        console.log(`Effet de l'objet "${item.name}" appliqué à ${player.username}`);
-    }
+    // Appliquer visuellement des changements temporaires si nécessaire
+    // Par exemple, affichage d'un message temporaire ou animation
+    console.log(`Effet visuel de l'objet "${item.name}" appliqué.`);
 }
-
-
-
 
 
     </script>
