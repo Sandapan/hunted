@@ -1,78 +1,112 @@
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #333;
-        }
+@charset "utf-8";
+body {
+    font-family: Arial, sans-serif;
+    background-color: #333;
+}
 
-        #lobby,
-        #room,
-        #chooseRole,
-        #chooseClass,
-        #castleRooms,
-        #waitingMessage,
-        #traqueursWait,
-        #adventurersWait {
-            display: none;
-        }
+#lobby,
+#room,
+#chooseRole,
+#chooseClass,
+#castleRooms,
+#waitingMessage,
+#traqueursWait,
+#adventurersWait {
+    display: none;
+}
 
-        .role,
-        .class,
-        .room {
-            cursor: pointer;
-            margin: 5px;
-        }
+.role,
+.class,
+.room {
+    cursor: pointer;
+    margin: 5px;
+}
 
-        .rooms-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            grid-gap: 20px;
-            max-width: 100%;
-            margin: 0 auto;
-            padding: 10px;
-            box-sizing: border-box;
-        }
+.rooms-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-gap: 20px;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 10px;
+    box-sizing: border-box;
+}
 
-        .room-cell {
-            text-align: center;
-        }
+.room-cell {
+    text-align: center;
+}
 
-        .room {
-            max-width: 100%;
-            height: auto;
-            cursor: pointer;
-            border: 1px solid #ccc;
-            box-sizing: border-box;
-        }
+.room {
+    max-width: 100%;
+    height: auto;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+}
 
-        .room-players {
-            margin-top: 10px;
-            font-size: 1em;
-            color: #333;
-        }
+.room-players {
+    margin-top: 10px;
+    font-size: 1em;
+    color: #333;
+}
 
-        .waiting-container {
-            text-align: center;
-            margin-top: 50px;
-        }
+.waiting-container {
+    text-align: center;
+    margin-top: 50px;
+}
 
-        .waiting-container img {
-            width: 100px;
-            margin-top: 20px;
-        }
+.waiting-container img {
+    width: 100px;
+    margin-top: 20px;
+}
 
 
-        /* Style optionnel pour le conteneur de résultats */
-        #resultsContainer {
-            display: none;
-            /* Caché par défaut */
-            margin-top: 20px;
-            padding: 10px;
-            border: 2px solid #333;
-            background-color: #f9f9f9;
-            font-size: 18px;
-            color: #333;
-        }
+/* Style optionnel pour le conteneur de résultats */
+#resultsContainer {
+    display: none;
+    /* Caché par défaut */
+    margin-top: 20px;
+    padding: 10px;
+    border: 2px solid #333;
+    background-color: #f9f9f9;
+    font-size: 18px;
+    color: #333;
+}
 
-        .hidden {
-            display: none;
-        }
-        
+.hidden {
+    display: none;
+}
+
+h1{
+    text-align: center;
+    font-size: 8em;
+    line-height: 0.5em;
+    font-family: kings and pirates;
+}
+
+#login{
+    text-align: center;
+    margin-top: -30px;
+}
+
+#login-button{
+    height: 30px;
+    border-radius: 10px;
+    margin-top: 20px;
+    border-color: rgba(0, 0, 0, 0);
+    cursor: pointer;
+}
+
+/* Font du titre */
+@font-face {
+    font-family: 'kings and pirates';
+    src: url('../fonts/kingsandpirates.eot');
+    src: local('kings and pirates'), local('kingsandpirates'),
+        url('../fonts/kingsandpirates.eot?#iefix') format('embedded-opentype'),
+        url('../fonts/kingsandpirates.woff') format('woff'),
+        url('../fonts/kingsandpirates.ttf') format('truetype'),
+        url('../fonts/kingsandpirates.svg#kingsandpirates') format('svg');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}

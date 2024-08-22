@@ -9,10 +9,10 @@
 </head>
 
 <body>
-    <h1>Participez à la traque</h1>
+    <h1>Hunted</h1>
     <div id="login">
-        <input type="text" id="username" placeholder="Quel est votre pseudo ?">
-        <button onclick="login()">S'inscrire</button>
+        <input type="text" id="username-input" placeholder="Entrez votre pseudo" style="text-align: center;"><br>
+        <button id="login-button" onclick="login()">Chercher un donjon</button>
     </div>
     <div id="lobby">
         <button onclick="createRoom()">Créer une traque</button>
@@ -108,7 +108,7 @@
         let className = '';
 
         function login() {
-            username = document.getElementById('username').value;
+            username = document.getElementById('username-input').value;
             if (username) {
                 document.getElementById('login').style.display = 'none';
                 document.getElementById('lobby').style.display = 'block';
@@ -480,8 +480,8 @@
             console.log('Objet reçu par le client :', item);
 
             if (item.name === 'Potion de soin') {
-        console.log('Potion de soin reçue, ajout à l\'inventaire');
-    }
+                console.log('Potion de soin reçue, ajout à l\'inventaire');
+            }
 
             if (item.playerId !== socket.id) {
                 return; // Ignorer si ce n'est pas le joueur concerné
@@ -540,7 +540,7 @@
                     });
 
                     // Optionnel : retirer l'item de l'affichage immédiatement après utilisation
-                    itemsList.removeChild(itemElement); 
+                    itemsList.removeChild(itemElement);
                     notificationElement.style.display = 'none';
                 };
 
