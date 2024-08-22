@@ -196,36 +196,35 @@ io.on('connection', (socket) => {
     
         if (rooms[roomId]) {
             rooms[roomId].choices[playerId] = roomIndex;
-    
+        
             const randomItem = getRandomItem();
             const player = rooms[roomId].players.find(p => p.id === playerId);
-    
-            // Appliquer l'effet si l'item impacte l'or
+        
+            // Si l'objet impacte l'or, appliquer l'effet directement
             if (['Petite bourse d\'or', 'Fortune', 'Somptueux trésor'].includes(randomItem.name)) {
-                randomItem.effect(player); // Mise à jour de l'or
+                randomItem.effect(player);
+            } else {
+                player.inventory.push(randomItem); // Ajouter l'item à l'inventaire du joueur
             }
-    
+        
             // Envoyer l'item au client et inclure l'or mis à jour
             io.to(playerId).emit('itemFound', {
                 ...randomItem,
-                currentGold: player.gold, // Envoyer l'or mis à jour
+                currentGold: player.gold,
                 playerId: playerId
             });
-    
-            // Notifier ce joueur qu'un item a été trouvé
+        
             socket.broadcast.to(roomId).emit('notifyItemFound', {
                 itemName: randomItem.name,
                 playerId: playerId
             });
         }
+        
     });
     
     
 
 // OK
-
-
-
 
 
 
@@ -275,6 +274,7 @@ socket.on('useItem', ({ itemName, roomId }) => {
         console.log(`L'objet ${itemName} n'a pas été trouvé dans l'inventaire du joueur ${player.username}`);
     }
 });
+
 
 
     // Code pour gérer la fin du tour d'un joueur
@@ -512,10 +512,6 @@ function updateHPForAll(roomId) {
         hp: player.hp
     }));
     io.in(roomId).emit('updatePlayers', rooms[roomId].players);
-    io.in(roomId).emit('updatePlayers', hpData); // Envoi des données HP
-    io.in(roomId).emit('updatePlayers', hpData, rooms[roomId].players);
-
-
 }
 
 
