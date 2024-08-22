@@ -89,6 +89,10 @@ h1{
     margin-bottom: 100px;
 }
 
+h3{
+    font-family: kings and pirates;
+}
+
 #login{
     text-align: center;
 }
@@ -122,4 +126,57 @@ h1{
 
 #lobby{
     text-align: center;
+}
+
+#room-infos{
+    display: space-between;
+}
+
+#room-title{
+    font-size: 1.17em;
+    font-weight: bold;
+    font-family: 'kings and pirates';
+}
+
+#delete-room-button{
+    float: right;
+    height: 30px;
+    border-radius: 10px;
+    border-color: rgba(0, 0, 0, 0);
+    cursor: pointer;
+}
+
+#players-table, tr, td{
+    border-collapse: collapse;
+    border: 1px solid;
+}
+
+.room-item-list {
+    overflow: hidden; /* Pour gérer les floats */
+    width: 50%;
+    margin: auto;
+    margin-bottom: 20px;
+}
+
+.room-info {
+    display: inline-block;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 15px;
+    padding: 10px 50px;
+    min-width: 70%;
+}
+
+.room-info div:first-child {
+    float: left;
+}
+
+.join-room-button{
+    float: right;
+}
+.join-room-button button{
+    align-items: center;
+    height: 4.1em;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
 }

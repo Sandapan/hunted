@@ -12,36 +12,39 @@
     <h1>Hunted</h1>
     <div id="login">
         <input type="text" id="username-input" placeholder="Entrez votre pseudo" style="text-align: center;"><br>
-        <button id="login-button" onclick="login()">Chercher un donjon</button>
+        <button id="login-button" onclick="login()">Partir à l'aventure</button>
     </div>
     <div id="lobby">
         <button id="create-room-button" onclick="createRoom()" style="margin-right: 20px;">Créer un groupe</button>
         <button id="join-room-button" onclick="showRooms()">Rejoindre un groupe</button>
         <div id="rooms" style="display: none;">
-            <h3>Donjons disponibles</h3>
-            <ul id="roomsList"></ul>
+            <h3>Aventures disponibles</h3>
+            <div id="roomsList"></div>
         </div>
     </div>
+    <div id="room">
+        <span id="room-infos">
+            <span id="room-title">Donjon - <span id="roomId"></span></span>
+            <span id="room-delete"><button id="delete-room-button" onclick="deleteRoom()">Détruire le donjon</button></span>
+        </span>
+        <p>Aventuriers devant le donjon</p>
+        <table id="players-table"><tr><td>Aucun joueur dans ce donjon !</td></tr></table>
+        <button id="change-role-button" onclick="changeRole()">Changer de rôle</button>
+        <button id="change-class-button" onclick="changeClass()">Changer de classe</button>
+        <button id="start-game-button" onclick="startGame()">Explorer le donjon</button>
+    </div>
     <div id="chooseRole">
-        <h2>Choisissez votre rôle</h2>
+        <h3>Choisissez votre role</h3>
         <img src="/images/escape.png" alt="Aventuriers" width="200px" class="role" onclick="chooseRole('aventurier')">
         <img src="/images/hunt.png" alt="Traqueurs" width="200px" class="role" onclick="chooseRole('traqueur')">
     </div>
     <div id="chooseClass">
-        <h2>Choisissez votre classe</h2>
+        <h3>Choisissez votre classe</h3>
         <div id="classOptions"></div>
-        <button onclick="goBackToRole()">Changer de rôle</button>
+        <button onclick="goBackToRole()">Changer de role</button>
     </div>
-    <div id="room">
-        <h2>Salle</h2>
-        <p>Room ID: <span id="roomId"></span></p>
-        <p>Joueurs :</p>
-        <ul id="players"></ul>
-        <button id="startGame" onclick="startGame()">Démarrer la traque</button>
-        <button id="deleteRoom" onclick="deleteRoom()">Supprimer la salle</button>
-        <button onclick="changeRole()">Changer de rôle</button>
-        <button onclick="changeClass()">Changer de classe</button>
-    </div>
+
+
     <div id="turnCounter" style="display: none;">Tour 1</div>
     <div id="traqueursWait" class="waiting-container">
         <h2>Veuillez attendre que les aventuriers jouent leur tour</h2>
@@ -119,9 +122,14 @@
             socket.emit('createRoom', username, (roomId) => {
                 currentRoomId = roomId;
                 document.getElementById('lobby').style.display = 'none';
+                document.getElementById('roomId').innerText = roomId;
                 document.getElementById('chooseRole').style.display = 'block';
                 document.getElementById('room').style.display = 'block';
-                document.getElementById('roomId').innerText = roomId;
+                
+                document.getElementById('roomId').style.visibility = 'visible';
+                document.getElementById('change-role-button').style.display = 'none';
+                document.getElementById('change-class-button').style.display = 'none';
+                document.getElementById('start-game-button').style.display = 'none';
             });
         }
 
@@ -131,17 +139,43 @@
 
         socket.on('roomsList', (rooms) => {
             const roomsList = document.getElementById('roomsList');
-            roomsList.innerHTML = '';
+            roomsList.innerHTML = ''; // Efface le contenu précédent
+
             rooms.forEach(room => {
-                const li = document.createElement('li');
-                li.innerText = `Room ${room.id} - Host: ${room.host}`;
+                // Crée le conteneur principal pour les informations de la salle
+                const roomDiv = document.createElement('div');
+                roomDiv.className = 'room-item-list';
+
+                // Crée la div pour le nom de l'hôte et l'ID de la salle
+                const roomDetailsDiv = document.createElement('div');
+                roomDetailsDiv.className = 'room-info';
+                const hostSpan = document.createElement('span');
+                hostSpan.innerText = room.host;
+                const idSpan = document.createElement('span');
+                idSpan.innerText = room.id;
+
+                // Ajoute le nom de l'hôte et l'ID à la div des détails de la salle
+                roomDetailsDiv.appendChild(hostSpan);
+                roomDetailsDiv.appendChild(document.createElement('br')); // Ajoute un saut de ligne
+                roomDetailsDiv.appendChild(idSpan);
+
+                // Crée le bouton de rejoindre la salle
+                const joinButtonDiv = document.createElement('div');
+                joinButtonDiv.className = 'join-room-button';
                 const joinButton = document.createElement('button');
                 joinButton.innerText = 'Rejoindre';
                 joinButton.onclick = () => joinRoom(room.id);
-                li.appendChild(joinButton);
-                roomsList.appendChild(li);
+                joinButtonDiv.appendChild(joinButton);
+
+                // Ajoute les divs de détails et de bouton au conteneur principal
+                roomDiv.appendChild(roomDetailsDiv);
+                roomDiv.appendChild(joinButtonDiv);
+
+                // Ajoute le conteneur de la salle à la liste des salles
+                roomsList.appendChild(roomDiv);
             });
-            document.getElementById('rooms').style.display = 'block';
+
+            document.getElementById('rooms').style.display = 'block'; // Affiche la section des salles
         });
 
 
@@ -199,6 +233,10 @@
             document.getElementById('chooseRole').style.display = 'none';
             document.getElementById('chooseClass').style.display = 'block';
 
+            document.getElementById('change-role-button').style.display = 'none';
+            document.getElementById('change-class-button').style.display = 'none';
+
+
             const classOptions = document.getElementById('classOptions');
             classOptions.innerHTML = '';
 
@@ -223,6 +261,13 @@
             socket.emit('chooseClass', { username, role, className, roomId: currentRoomId }, (players) => {
                 document.getElementById('chooseClass').style.display = 'none';
                 document.getElementById('room').style.display = 'block';
+
+
+                document.getElementById('change-role-button').style.display = 'block';
+                document.getElementById('change-class-button').style.display = 'block';
+                document.getElementById('start-game-button').style.display = 'block';
+
+
                 updatePlayers(players);
             });
         }
@@ -235,27 +280,54 @@
             document.getElementById('chooseRole').style.display = 'block';
         }
 
+        /***** Tableau  des joueurs ****/
         function updatePlayers(players) {
-            const playersList = document.getElementById('players');
-            playersList.innerHTML = ''; // Efface le contenu précédent de la liste des joueurs
+            const playersTable = document.getElementById('players-table');
+            playersTable.innerHTML = ''; // Efface le contenu précédent de la table des joueurs
+
+            const row = document.createElement('tr'); // Crée une ligne pour contenir les tableaux de chaque joueur
 
             players.forEach(player => {
-                const li = document.createElement('li'); // Crée un nouvel élément de liste pour chaque joueur
+                // Crée un tableau pour chaque joueur
+                const playerTable = document.createElement('table'); 
+                const tbody = document.createElement('tbody'); // Crée un corps de tableau
 
-                // Définit le texte de l'élément de liste avec le nom d'utilisateur, le rôle, la classe et les points de vie
-                li.innerText = `${player.username} (${player.role}, ${player.className}) - ${player.hp} HP`;
+                // Première ligne: Image du joueur
+                const rowImage = document.createElement('tr'); // Crée une nouvelle ligne pour l'image du joueur
+                const cellImage = document.createElement('td'); // Crée une cellule pour l'image
 
                 if (player.role && player.className) {
                     const img = document.createElement('img'); // Crée une image pour le joueur
                     img.src = `/images/${player.className.toLowerCase()}.gif`; // Définit la source de l'image en fonction de la classe du joueur
                     img.style = 'width: 50px; height: 50px'; // Définit la taille de l'image
                     img.alt = player.className; // Définit le texte alternatif de l'image
-                    li.appendChild(img); // Ajoute l'image à l'élément de liste
+                    cellImage.appendChild(img); // Ajoute l'image à la cellule
                 }
 
-                playersList.appendChild(li); // Ajoute l'élément de liste à la liste des joueurs
+                rowImage.appendChild(cellImage); // Ajoute la cellule avec l'image à la ligne
+                tbody.appendChild(rowImage); // Ajoute la ligne avec l'image au corps du tableau
+
+                // Deuxième ligne: Informations du joueur
+                const rowInfo = document.createElement('tr'); // Crée une nouvelle ligne pour les informations du joueur
+                const cellInfo = document.createElement('td'); // Crée une cellule pour les informations
+
+                // Définit le texte de la cellule avec le nom d'utilisateur, le rôle, la classe et les points de vie
+                cellInfo.innerText = `${player.username} (${player.role}, ${player.className}) - ${player.hp} HP`;
+
+                rowInfo.appendChild(cellInfo); // Ajoute la cellule avec les informations à la ligne
+                tbody.appendChild(rowInfo); // Ajoute la ligne avec les informations au corps du tableau
+
+                playerTable.appendChild(tbody); // Ajoute le corps du tableau au tableau
+
+                const cellPlayer = document.createElement('td'); // Crée une cellule pour contenir le tableau du joueur
+                cellPlayer.appendChild(playerTable); // Ajoute le tableau du joueur à la cellule
+
+                row.appendChild(cellPlayer); // Ajoute la cellule à la ligne principale
             });
+
+            playersTable.appendChild(row); // Ajoute la ligne principale au tableau des joueurs
         }
+
 
 
 
@@ -263,13 +335,17 @@
             document.getElementById('turnCounter').textContent = `Tour ${turnCounter}`;
         });
 
+        // Suppression de la room
+        function deleteRoom() {
+            socket.emit('deleteRoom', currentRoomId);
+        }
 
         function startGame() {
             // Masquer les boutons en ajoutant la classe 'hidden'
-            document.getElementById('startGame').classList.add('hidden');
-            document.getElementById('deleteRoom').classList.add('hidden');
-            document.querySelector('button[onclick="changeRole()"]').classList.add('hidden');
-            document.querySelector('button[onclick="changeClass()"]').classList.add('hidden');
+            document.getElementById('change-role-button').style.display = 'none';
+            document.getElementById('change-class-button').style.display = 'none';
+            document.getElementById('start-game-button').style.display = 'none';
+            document.getElementById('delete-room-button').style.display = 'none';
 
             // Émettre l'événement pour démarrer le jeu
             socket.emit('startGame', currentRoomId);
@@ -278,10 +354,6 @@
 
         socket.on('gameStarted', () => {
             // Afficher le compteur de tours
-            document.getElementById('startGame').classList.add('hidden');
-            document.getElementById('deleteRoom').classList.add('hidden');
-            document.querySelector('button[onclick="changeRole()"]').classList.add('hidden');
-            document.querySelector('button[onclick="changeClass()"]').classList.add('hidden');
             const turnDisplay = document.getElementById('turnCounter');
             if (turnDisplay) {
                 turnDisplay.style.display = 'block';
