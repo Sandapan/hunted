@@ -77,22 +77,31 @@ body {
     display: none;
 }
 
+
+/***************************************************/
+
+/****** Home *******/
 h1{
     text-align: center;
     font-size: 8em;
     line-height: 0.5em;
     font-family: kings and pirates;
+    margin-bottom: 100px;
 }
 
 #login{
     text-align: center;
-    margin-top: -30px;
 }
 
-#login-button{
+#username-input{
+    margin-bottom: 20px;
+}
+
+#login-button,
+#create-room-button,
+#join-room-button{
     height: 30px;
     border-radius: 10px;
-    margin-top: 20px;
     border-color: rgba(0, 0, 0, 0);
     cursor: pointer;
 }
@@ -109,4 +118,9 @@ h1{
     font-weight: 500;
     font-style: normal;
     font-display: swap;
+}
+
+/****** Home *******/
+#lobby{
+    text-align: center;
 }

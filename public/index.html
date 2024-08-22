@@ -15,10 +15,10 @@
         <button id="login-button" onclick="login()">Chercher un donjon</button>
     </div>
     <div id="lobby">
-        <button onclick="createRoom()">Créer une traque</button>
-        <button onclick="showRooms()">Rejoindre une traque</button>
+        <button id="create-room-button" onclick="createRoom()" style="margin-right: 20px;">Créer un groupe</button>
+        <button id="join-room-button" onclick="showRooms()">Rejoindre un groupe</button>
         <div id="rooms" style="display: none;">
-            <h3>Salles disponibles :</h3>
+            <h3>Donjons disponibles</h3>
             <ul id="roomsList"></ul>
         </div>
     </div>
