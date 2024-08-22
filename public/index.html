@@ -5,81 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hunted Game</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #333;
-        }
-
-        #lobby,
-        #room,
-        #chooseRole,
-        #chooseClass,
-        #castleRooms,
-        #waitingMessage,
-        #traqueursWait,
-        #adventurersWait {
-            display: none;
-        }
-
-        .role,
-        .class,
-        .room {
-            cursor: pointer;
-            margin: 5px;
-        }
-
-        .rooms-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            grid-gap: 20px;
-            max-width: 100%;
-            margin: 0 auto;
-            padding: 10px;
-            box-sizing: border-box;
-        }
-
-        .room-cell {
-            text-align: center;
-        }
-
-        .room {
-            max-width: 100%;
-            height: auto;
-            cursor: pointer;
-            border: 1px solid #ccc;
-            box-sizing: border-box;
-        }
-
-        .room-players {
-            margin-top: 10px;
-            font-size: 1em;
-            color: #333;
-        }
-
-        .waiting-container {
-            text-align: center;
-            margin-top: 50px;
-        }
-
-        .waiting-container img {
-            width: 100px;
-            margin-top: 20px;
-        }
-
-
-        /* Style optionnel pour le conteneur de résultats */
-        #resultsContainer {
-            display: none;
-            /* Caché par défaut */
-            margin-top: 20px;
-            padding: 10px;
-            border: 2px solid #333;
-            background-color: #f9f9f9;
-            font-size: 18px;
-            color: #333;
-        }
-    </style>
+    <link href="css/style.css" rel="stylesheet" />
 </head>
 
 <body>
@@ -117,7 +43,6 @@
         <button onclick="changeClass()">Changer de classe</button>
     </div>
     <div id="turnCounter" style="display: none;">Tour 1</div>
-    <div id="hpContainer"></div>
     <div id="traqueursWait" class="waiting-container">
         <h2>Veuillez attendre que les aventuriers jouent leur tour</h2>
         <img src="/images/hourglass.gif" alt="Hourglass">
@@ -312,19 +237,27 @@
 
         function updatePlayers(players) {
             const playersList = document.getElementById('players');
-            playersList.innerHTML = '';
+            playersList.innerHTML = ''; // Efface le contenu précédent de la liste des joueurs
+
             players.forEach(player => {
-                const li = document.createElement('li');
-                li.innerText = `${player.username} (${player.role}, ${player.className})`;
+                const li = document.createElement('li'); // Crée un nouvel élément de liste pour chaque joueur
+
+                // Définit le texte de l'élément de liste avec le nom d'utilisateur, le rôle, la classe et les points de vie
+                li.innerText = `${player.username} (${player.role}, ${player.className}) - ${player.hp} HP`;
+
                 if (player.role && player.className) {
-                    const img = document.createElement('img');
-                    img.src = `/images/${player.className.toLowerCase()}.gif`;
-                    img.alt = player.className;
-                    li.appendChild(img);
+                    const img = document.createElement('img'); // Crée une image pour le joueur
+                    img.src = `/images/${player.className.toLowerCase()}.gif`; // Définit la source de l'image en fonction de la classe du joueur
+                    img.style = 'width: 50px; height: 50px'; // Définit la taille de l'image
+                    img.alt = player.className; // Définit le texte alternatif de l'image
+                    li.appendChild(img); // Ajoute l'image à l'élément de liste
                 }
-                playersList.appendChild(li);
+
+                playersList.appendChild(li); // Ajoute l'élément de liste à la liste des joueurs
             });
         }
+
+
 
         socket.on('updateTurnCounter', (turnCounter) => {
             document.getElementById('turnCounter').textContent = `Tour ${turnCounter}`;
@@ -332,11 +265,23 @@
 
 
         function startGame() {
+            // Masquer les boutons en ajoutant la classe 'hidden'
+            document.getElementById('startGame').classList.add('hidden');
+            document.getElementById('deleteRoom').classList.add('hidden');
+            document.querySelector('button[onclick="changeRole()"]').classList.add('hidden');
+            document.querySelector('button[onclick="changeClass()"]').classList.add('hidden');
+
+            // Émettre l'événement pour démarrer le jeu
             socket.emit('startGame', currentRoomId);
         }
 
+
         socket.on('gameStarted', () => {
             // Afficher le compteur de tours
+            document.getElementById('startGame').classList.add('hidden');
+            document.getElementById('deleteRoom').classList.add('hidden');
+            document.querySelector('button[onclick="changeRole()"]').classList.add('hidden');
+            document.querySelector('button[onclick="changeClass()"]').classList.add('hidden');
             const turnDisplay = document.getElementById('turnCounter');
             if (turnDisplay) {
                 turnDisplay.style.display = 'block';
@@ -469,17 +414,6 @@
         socket.on('displayMessage', (message) => {
             document.getElementById('messageBox').innerText = message;
             document.getElementById('messageBox').style.display = 'block';
-        });
-
-        socket.on('updateHP', (hpData) => {
-            const hpContainer = document.getElementById('hpContainer');
-            hpContainer.innerHTML = ''; // Clear previous HP data
-
-            hpData.forEach(player => {
-                const hpElement = document.createElement('div');
-                hpElement.innerText = `${player.username}: ${player.hp} HP`;
-                hpContainer.appendChild(hpElement);
-            });
         });
 
 

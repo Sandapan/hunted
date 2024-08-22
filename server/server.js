@@ -6,9 +6,15 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
+const path = require('path'); // Utilisation du module path pour manipuler les chemins de fichiers
+
+
 const port = process.env.PORT || 3000;
 
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, '../public')));
+
+const items = require('./objets'); // utilise le fichier objets.js 
+
 
 const rooms = {};
 
@@ -19,37 +25,6 @@ const roomNames = [
     'la salle des tortures',
     'la salle du trône',
     "l'église"
-];
-
-
-// LISTE D OBJETS MISE EN PLACE INVENTAIRE
-
-const items = [
-    {
-        name: 'Potion de soin',
-        description: 'Consommable redonnant 1 HP',
-        image: '/images/healing_potion.png',  // Chemin relatif à public
-        effect: (player) => { player.hp += 1; }
-    },
-    {
-        name: 'Petite bourse d\'or',
-        description: 'Contient 50 pièces d\'or',
-        image: '/images/small_gold_pouch.png',  // Chemin relatif à public
-        effect: (player) => { player.gold += 50; }
-    },
-    {
-        name: 'Fortune',
-        description: 'Contient 100 pièces d\'or',
-        image: '/images/fortune.png',  // Chemin relatif à public
-        effect: (player) => { player.gold += 100; }
-    },
-    {
-        name: 'Somptueux trésor',
-        description: 'Contient 250 pièces d\'or',
-        image: '/images/luxurious_treasure.png',  // Chemin relatif à public
-        effect: (player) => { player.gold += 250; }
-    },
-    // Vous pouvez ajouter plus d'objets ici à l'avenir
 ];
 
 
@@ -218,41 +193,33 @@ io.on('connection', (socket) => {
     socket.on('chooseRoom', ({ roomId, roomIndex }) => {
         const playerId = socket.id;
         console.log(`Player ${playerId} a choisi la salle ${roomIndex} dans la room ${roomId}`);
-
+    
         if (rooms[roomId]) {
             rooms[roomId].choices[playerId] = roomIndex;
-
+    
             const randomItem = getRandomItem();
-
-            // Trouver le joueur pour obtenir son montant d'or actuel
             const player = rooms[roomId].players.find(p => p.id === playerId);
-
-            // Appliquer l'effet de l'objet si disponible
+    
             if (randomItem.effect) {
-                randomItem.effect(player); // Appliquer l'effet à l'objet
+                randomItem.effect(player);
             }
-
-            // Assurer que l'objet trouvé et le montant d'or sont bien envoyés au joueur concerné
+    
             io.to(playerId).emit('itemFound', {
                 ...randomItem,
                 currentGold: player.gold,
-                playerId: playerId // Ajout de playerId pour vérifier que le bon joueur reçoit l'info
+                playerId: playerId
             });
-
-            // Diffuser l'information de l'objet trouvé à tous les joueurs, mais sans leur donner l'objet
+    
             socket.broadcast.to(roomId).emit('notifyItemFound', {
                 itemName: randomItem.name,
-                playerId: playerId // Pour dire quel joueur a trouvé l'objet
+                playerId: playerId
             });
 
-            // Vérifier si tous les aventuriers ont terminé leur tour
-            setTimeout(() => {
-                checkAllAdventurersChosen(roomId);
-            }, 5000);
         }
     });
+    
 
-
+// OK
 
 
 
@@ -448,10 +415,15 @@ function checkResults(roomId) {
 
                 if (foundAdventurers.length === 1) {
                     adventurerList = foundAdventurers[0];
+                    
+
                 } else if (foundAdventurers.length === 2) {
                     adventurerList = `${foundAdventurers[0]} et ${foundAdventurers[1]}`;
+                    
+
                 } else {
                     adventurerList = `${foundAdventurers.slice(0, -1).join(', ')} et ${foundAdventurers[foundAdventurers.length - 1]}`;
+                    
                 }
 
                 results.push(`${hunter.username} a trouvé ${adventurerList} dans ${roomName}`);
@@ -461,6 +433,7 @@ function checkResults(roomId) {
                     const adventurer = room.players.find(player => player.username === adventurerUsername);
                     if (adventurer) {
                         adventurer.hp -= 1;
+                        io.in(roomId).emit('updatePlayers', rooms[roomId].players);
                         if (adventurer.hp <= 0) {
                             // Gérer le cas où un aventurier n'a plus de points de vie
                             results.push(`${adventurer.username} a été éliminé!`);
@@ -505,6 +478,8 @@ function startNewTurn(roomId) {
 
     // Envoyer l'information du nouveau tour aux joueurs
     io.in(roomId).emit('updateTurnCounter', room.turnCounter);
+    io.in(roomId).emit('updatePlayers', rooms[roomId].players);
+
 
     // Débuter le tour des aventuriers
     io.in(roomId).emit('startAdventurersTurn');
@@ -516,7 +491,7 @@ function updateHPForAll(roomId) {
         username: player.username,
         hp: player.hp
     }));
-    io.in(roomId).emit('updateHP', hpData);
+    io.in(roomId).emit('updatePlayers', rooms[roomId].players);
 }
 
 
