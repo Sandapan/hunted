@@ -196,27 +196,32 @@ io.on('connection', (socket) => {
     
         if (rooms[roomId]) {
             rooms[roomId].choices[playerId] = roomIndex;
-    
+        
             const randomItem = getRandomItem();
             const player = rooms[roomId].players.find(p => p.id === playerId);
-    
-            if (randomItem.effect) {
+        
+            // Si l'objet impacte l'or, appliquer l'effet directement
+            if (['Petite bourse d\'or', 'Fortune', 'Somptueux trésor'].includes(randomItem.name)) {
                 randomItem.effect(player);
+            } else {
+                player.inventory.push(randomItem); // Ajouter l'item à l'inventaire du joueur
             }
-    
+        
+            // Envoyer l'item au client et inclure l'or mis à jour
             io.to(playerId).emit('itemFound', {
                 ...randomItem,
                 currentGold: player.gold,
                 playerId: playerId
             });
-    
+        
             socket.broadcast.to(roomId).emit('notifyItemFound', {
                 itemName: randomItem.name,
                 playerId: playerId
             });
-
         }
+        
     });
+    
     
 
 // OK
@@ -224,37 +229,52 @@ io.on('connection', (socket) => {
 
 
 
-
-
-
-    // fonction à changer 
-    function applyItemEffect(roomId, playerId, item) {
-        const player = rooms[roomId].players.find(p => p.id === playerId);
-        if (player && item.effect) {
-            item.effect(player); // Appliquer l'effet de l'objet au joueur
-            console.log(`Effet de l'objet "${item.name}" appliqué à ${player.username}`);
-        }
+function applyItemEffect(roomId, playerId, item) {
+    const player = rooms[roomId].players.find(p => p.id === playerId);
+    if (player && item.effect) {
+        item.effect(player); // Appliquer l'effet de l'objet au joueur
+        console.log(`Effet de l'objet "${item.name}" appliqué à ${player.username}, nouveaux HP: ${player.hp}`);
+        
+        // Vous pouvez mettre à jour l'état du joueur ici si nécessaire (points de vie, or, etc.)
+        // Assurez-vous de mettre à jour la salle si les informations doivent être envoyées à tous les joueurs
+        updateHPForAll(roomId);
+    } else {
+        console.log(`L'objet ${item.name} ou l'effet n'a pas été trouvé.`);
     }
+}
 
-
-
-
-    function applyItemEffect(item) {
-        const player = {
-            id: socket.id,
-            username: username // Tu pourrais avoir plus d'infos sur le joueur si nécessaire
-        };
-        if (item.effect) {
-            item.effect(player); // Appliquer l'effet de l'objet au joueur
-            console.log(`Effet de l'objet "${item.name}" appliqué à ${player.username}`);
-        }
-    }
 
     // Fonction pour obtenir un item aléatoire
     function getRandomItem() {
         const randomIndex = Math.floor(Math.random() * items.length);
         return items[randomIndex];
     }
+
+// Recevoir l'utilisation d'un item du client
+// Écouter l'événement 'useItem' émis par le client
+socket.on('useItem', ({ itemName, roomId }) => {
+    const playerId = socket.id;
+    const room = rooms[roomId];
+    const player = room.players.find(p => p.id === playerId);
+
+    if (!player) {
+        console.log(`Joueur avec l'ID ${playerId} non trouvé dans la salle ${roomId}`);
+        return;
+    }
+
+    const item = player.inventory.find(i => i.name === itemName);
+
+    if (item && item.effect) {
+        item.effect(player); // Appliquer l'effet de l'objet
+        console.log(`Effet de l'objet "${itemName}" appliqué à ${player.username}, nouveaux HP: ${player.hp}`);
+
+        // Mettre à jour les points de vie pour tous les joueurs de la room
+        updateHPForAll(roomId);
+    } else {
+        console.log(`L'objet ${itemName} n'a pas été trouvé dans l'inventaire du joueur ${player.username}`);
+    }
+});
+
 
 
     // Code pour gérer la fin du tour d'un joueur
