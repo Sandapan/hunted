@@ -121,6 +121,31 @@ function notifyHuntersIfKeyFound(roomId, playerId, roomIndex) {
 io.on('connection', (socket) => {
     console.log('a user connected');
 
+    // CHAT ECRIT AVENTURIERS :
+
+// Ecouter les messages de chat envoyés par les aventuriers
+socket.on('groupChatMessage', ({ message, roomId }) => {
+    console.log(`Message de chat reçu: ${message} pour la salle: ${roomId}`);
+    const room = rooms[roomId];
+    if (room) {
+        const player = room.players.find(p => p.id === socket.id);
+        if (player && player.role === 'aventurier') {
+            io.to(roomId).emit('receiveGroupChatMessage', {
+                username: player.username,
+                message: message
+            });
+        }
+    } else {
+        console.log(`Salle non trouvée pour le roomId: ${roomId}`);
+    }
+});
+
+
+
+
+
+// FIN // CHAT ECRIT AVENTURIERS 
+
     socket.on('createRoom', (username, callback) => {
         const roomId = socket.id;
         rooms[roomId] = {
@@ -513,6 +538,9 @@ function updateHPForAll(roomId) {
     }));
     io.in(roomId).emit('updatePlayers', rooms[roomId].players);
 }
+
+
+
 
 
 server.listen(port, () => {
